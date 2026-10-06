@@ -1,0 +1,1 @@
+{"build": {"builder": "NIXPACKS"}, "deploy": {"restartPolicyMaxRetries": 10, "restartPolicyType": "ON_FAILURE", "startCommand": "python main.py"}}
