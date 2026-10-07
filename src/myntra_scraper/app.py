@@ -31,15 +31,18 @@ class ScraperApp:
                                      settings.pincode, settings.scrape_concurrency,
                                      settings.max_pages_per_url)
         self.notifier = DealNotifier(settings.bot_tokens, settings.channels,
-                                     settings.AFFILIATE_PARAMS)
+                                     settings.affiliate_tag)
         self.controller = ControllerBot(settings.control_bot_token,
                                         settings.admin_chat_id, self)
         self.spam_words = self._load_spam_words()
+        self.affiliate_tag = self._load_affiliate_tag()
+        self.notifier.set_affiliate_tag(self.affiliate_tag)
         self.scraping_enabled = True
         self.cycle_count = 0
         self.start_time = datetime.now()
-        log.info("App ready | %d links | spam=%d | blacklist=%d",
-                 len(self.links), len(self.spam_words), len(self.blacklist.all()))
+        log.info("App ready | %d links | spam=%d | blacklist=%d | affiliate=%s",
+                 len(self.links), len(self.spam_words), len(self.blacklist.all()),
+                 "OFF (clean links)" if not self.affiliate_tag else "ON")
 
     def _load_spam_words(self) -> set[str]:
         words = {w.lower() for w in self.settings.DEFAULT_SPAM_WORDS}
@@ -55,6 +58,29 @@ class ScraperApp:
     def save_spam_words(self) -> None:
         custom = self.spam_words - {w.lower() for w in self.settings.DEFAULT_SPAM_WORDS}
         self.settings.spam_words_file.write_text("\n".join(sorted(custom)), encoding="utf-8")
+
+    # -- affiliate tag (persisted on volume, live-updatable) ------------------
+    def _load_affiliate_tag(self) -> str:
+        try:
+            if self.settings.affiliate_tag_file.exists():
+                saved = self.settings.affiliate_tag_file.read_text(
+                    encoding="utf-8").strip().lstrip("?&")
+                if saved or not self.settings.affiliate_tag:
+                    return saved
+        except OSError as exc:
+            log.warning("Affiliate tag file unreadable: %s", exc)
+        return self.settings.affiliate_tag
+
+    def set_affiliate_tag(self, tag: str) -> str:
+        tag = (tag or "").strip().lstrip("?&")
+        self.affiliate_tag = tag
+        self.notifier.set_affiliate_tag(tag)
+        try:
+            self.settings.affiliate_tag_file.write_text(tag, encoding="utf-8")
+        except OSError as exc:
+            log.warning("Affiliate tag file unwritable: %s", exc)
+        log.info("Affiliate tag %s", "cleared (clean links)" if not tag else "set")
+        return tag
 
     def _is_spam(self, product: Product) -> tuple[bool, str]:
         combined = ("%s %s" % (product.brand, product.title)).lower()
@@ -138,6 +164,8 @@ class ScraperApp:
                 sc.get("forbidden", 0), sc.get("rate_limited", 0)),
             "blacklist: %d rules | spam words: %d" % (
                 len(self.blacklist.all()), len(self.spam_words)),
+            "affiliate: %s" % ("OFF (clean links)" if not self.affiliate_tag
+                               else "ON (%s…)" % self.affiliate_tag[:40]),
         ])
 
     async def shutdown(self) -> None:

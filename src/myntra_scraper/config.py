@@ -45,13 +45,14 @@ class Settings:
     max_cycles: int = 0
     port: int = 0
     log_level: str = "INFO"
+    # Deal-link tag. "" = OFF -> plain `https://www.myntra.com/<ID>`.
+    # Set AFFILIATE_TAG (or /set_affiliate) later to e.g.
+    # `utm_source=ugc_affiliate&utm_medium=social_share_pdp&utm_campaign=XYZ`.
+    affiliate_tag: str = ""
 
-    AFFILIATE_PARAMS: dict = field(default_factory=lambda: {
-        "utm_source": "ugc_affiliate",
-        "utm_medium": "social_share_pdp",
-        "utm_campaign": "0dposbkZhT",
-        "affiliate_id": "0dposbkZhT",
-    })
+    # Legacy dict-style params (renamed — was AFFILIATE_PARAMS). Only read
+    # when affiliate_tag is empty AND AFFILIATE_TAG unset; will be removed.
+    legacy_affiliate_params: dict = field(default_factory=dict)
     DEFAULT_SPAM_WORDS: tuple = (
         "gift card", "membership", "subscription", "coupon", "bundle",
         "pack", "combo", "set", "collection", "set of", "bulk",
@@ -86,6 +87,7 @@ class Settings:
             max_cycles=_env_int("MAX_CYCLES", 0),
             port=port,
             log_level=os.environ.get("LOG_LEVEL", "INFO").upper(),
+            affiliate_tag=os.environ.get("AFFILIATE_TAG", "").strip().lstrip("?&"),
         )
         settings.validate()
         return settings
@@ -119,6 +121,10 @@ class Settings:
     @property
     def spam_words_file(self) -> Path:
         return self.data_dir / "spam_words.txt"
+
+    @property
+    def affiliate_tag_file(self) -> Path:
+        return self.data_dir / "affiliate_tag.txt"
 
     @property
     def log_file(self) -> Path:

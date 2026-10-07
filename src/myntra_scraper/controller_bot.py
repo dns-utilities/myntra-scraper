@@ -28,6 +28,9 @@ HELP_TEXT = (
     "/stop — stop scraping\n"
     "/status — live stats\n"
     "/diag — live Myntra probe (token + 1 search)\n"
+    "/affiliate — show current link tag (OFF = clean links)\n"
+    "/set_affiliate <query> — set tag, e.g. /set_affiliate utm_source=x&utm_campaign=y\n"
+    "/clear_affiliate — back to clean links\n"
     "/add_link <myntra url> — track a search\n"
     "/remove_link <url or number> — untrack\n"
     "/list_links — tracked searches\n"
@@ -157,6 +160,24 @@ class ControllerBot:
             return "Forgot %s." % pid if app.seen.forget(pid) else "%s not in DB." % pid
         if low.startswith("/clear_all") or cmd.strip() == "CLEARALL#":
             return "Wiped %d products." % app.seen.clear()
+        if low.startswith("/affiliate"):
+            tag = app.affiliate_tag
+            if not tag:
+                return ("Affiliate: OFF — posting clean links\n"
+                        "https://www.myntra.com/<ID>\n"
+                        "Set one: /set_affiliate utm_source=x&utm_campaign=y")
+            return "Affiliate: ON\n%s\nPreview: https://www.myntra.com/<ID>?%s" % (tag, tag[:120])
+        if low.startswith("/set_affiliate"):
+            tag = cmd.split(None, 1)[1].strip() if " " in cmd else ""
+            if not tag:
+                return ("Usage: /set_affiliate <query>\n"
+                        "e.g. /set_affiliate utm_source=ugc_affiliate&utm_campaign=YOURTAG")
+            tag = app.set_affiliate_tag(tag)
+            return ("Affiliate ON.\nNew links: https://www.myntra.com/<ID>?%s\n"
+                    "Persists on volume; survives redeploys." % tag[:160])
+        if low.startswith("/clear_affiliate"):
+            app.set_affiliate_tag("")
+            return "Affiliate OFF — back to clean links."
         return None
 
     @staticmethod

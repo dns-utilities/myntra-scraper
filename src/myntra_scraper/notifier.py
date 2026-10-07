@@ -16,10 +16,11 @@ log = logging.getLogger("myntra_scraper.notifier")
 
 class DealNotifier:
     def __init__(self, bot_tokens: list[str], channels: dict[str, int],
-                 affiliate_params: dict) -> None:
+                 affiliate_tag: str | dict | None = "") -> None:
         self._tokens = bot_tokens
         self._channels = channels
-        self._affiliate = affiliate_params
+        self._affiliate = ""
+        self.set_affiliate_tag(affiliate_tag)
         self._queue: deque = deque()
         self._queue_lock = threading.Lock()
         self._stats_lock = threading.Lock()
@@ -32,6 +33,18 @@ class DealNotifier:
         self.by_channel = {name: 0 for name in channels}
         log.info("Notifier: %d bots | %d channels", len(bot_tokens), len(channels))
         self.start()
+
+    def set_affiliate_tag(self, tag: str | dict | None) -> None:
+        # Plain string query ("" = OFF). Dict accepted only for back-compat
+        # with old callers; converted to a query string.
+        if isinstance(tag, dict):
+            from urllib.parse import urlencode as _urlencode
+            tag = _urlencode(tag) if tag else ""
+        self._affiliate = (tag or "").strip().lstrip("?&")
+
+    @property
+    def affiliate_tag(self) -> str:
+        return self._affiliate
 
     def route(self, discount: int) -> list[int]:
         if discount >= DiscountTier.JACKPOT:
