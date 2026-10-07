@@ -69,7 +69,8 @@ class DealNotifier:
             if resp.status_code == 429:
                 wait = resp.json().get("parameters", {}).get("retry_after", 5)
                 return "rate_limit:%d" % wait
-            log.error("Send failed HTTP %d", resp.status_code)
+            log.error("Send failed HTTP %d to %s: %s", resp.status_code,
+                      chat_id, (resp.text or "")[:200])
             return "error"
         except Exception as exc:
             log.error("Send error: %s", exc)

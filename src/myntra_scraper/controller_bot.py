@@ -170,7 +170,8 @@ class ControllerBot:
         return ""
 
     def _loop(self) -> None:
-        log.info("Controller polling started")
+        log.info("Controller polling started (admin=%d, watching %d deal chats)",
+                 self._admin, len(set(self._app.settings.channels.values())))
         errors = 0
         deal_chats = set(self._app.settings.channels.values())
         while self._running:
@@ -181,8 +182,17 @@ class ControllerBot:
                     continue
                 data = self._api("getUpdates", offset=self._offset + 1,
                                  timeout=30, allowed_updates=["message", "channel_post"])
+                # getUpdates conflict (409) = same bot token polling elsewhere.
+                # Surface it loudly instead of spinning silently.
+                if data.get("error_code") == 409 or "conflict" in str(data.get("description", "")).lower():
+                    log.error("Controller CONFLICT: %s — another instance (local run? old deploy?) "
+                              "is polling this bot token. Stop it or commands/replies race.",
+                              data.get("description", "terminated by other getUpdates"))
+                    time.sleep(30)
+                    continue
                 errors = 0
-                for update in data.get("result", []):
+                results = data.get("result", [])
+                for update in results:
                     uid = update.get("update_id", 0)
                     if uid in self._seen:
                         continue
@@ -199,12 +209,14 @@ class ControllerBot:
                     legacy = ("ADD#", "REMOVE#", "LIST#", "CLEAR", "STATUS#", "HELP#", "#")
                     is_legacy = chat_id in deal_chats and text.startswith(legacy)
                     if not (is_admin or is_legacy):
+                        log.warning("Controller ignoring msg from chat %s (not admin=%d): %s",
+                                    chat_id, self._admin, text[:60])
                         continue
                     reply_to = msg.get("reply_to_message") or {}
                     response = self._handle(text, chat_id, reply_to.get("text", ""))
                     if response:
                         self.reply(response, None if is_admin else chat_id)
-                        log.info("CMD: %s", text[:60])
+                        log.info("CMD from %s: %s", chat_id, text[:60])
                 time.sleep(1)
             except Exception as exc:
                 errors += 1
