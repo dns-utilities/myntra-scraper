@@ -9,6 +9,15 @@ import sys
 import threading
 from pathlib import Path
 
+# Windows consoles default to cp1252 which can't encode the emoji used in deal
+# messages (₹ 🔥 💎 🚨). Reconfigure stdout/stderr to UTF-8 up front. No-op on
+# Linux/Railway. Must run before anything prints.
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 # curl_cffi async I/O needs a selector loop on Windows (ProactorLoop lacks
 # add_reader and crashes). Ported from the original Myntra-main bot.
 if sys.platform == "win32":

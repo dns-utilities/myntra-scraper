@@ -9,6 +9,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_DATA_DIR = PROJECT_ROOT / "data"
 SEED_LINKS_FILE = PROJECT_ROOT / "config" / "links.txt"
+SEED_CROMA_LINKS_FILE = PROJECT_ROOT / "config" / "croma_links.txt"
 
 
 def _parse_tokens(raw: str) -> list[str]:
@@ -45,6 +46,12 @@ class Settings:
     max_cycles: int = 0
     port: int = 0
     log_level: str = "INFO"
+    # ---- Croma scraper (runs alongside Myntra in the same deployment) ----
+    croma_enabled: bool = True
+    croma_impersonate: str = "chrome120"
+    croma_channel_code: str = "400049"
+    croma_max_pages: int = 10
+    croma_concurrency: int = 6
     # Deal-link tag. "" = OFF -> plain `https://www.myntra.com/<ID>`.
     # Set AFFILIATE_TAG (or /set_affiliate) later to e.g.
     # `utm_source=ugc_affiliate&utm_medium=social_share_pdp&utm_campaign=XYZ`.
@@ -88,6 +95,11 @@ class Settings:
             port=port,
             log_level=os.environ.get("LOG_LEVEL", "INFO").upper(),
             affiliate_tag=os.environ.get("AFFILIATE_TAG", "").strip().lstrip("?&"),
+            croma_enabled=os.environ.get("CROMA_ENABLED", "true").strip().lower() in ("1", "true", "yes", "on"),
+            croma_impersonate=os.environ.get("CROMA_IMPERSONATE", "chrome120").strip(),
+            croma_channel_code=os.environ.get("CROMA_CHANNEL_CODE", "400049").strip(),
+            croma_max_pages=_env_int("CROMA_MAX_PAGES", 10),
+            croma_concurrency=_env_int("CROMA_CONCURRENCY", 6),
         )
         settings.validate()
         return settings
@@ -111,8 +123,20 @@ class Settings:
         return self.data_dir / "links.txt"
 
     @property
+    def croma_links_file(self) -> Path:
+        return self.data_dir / "croma_links.txt"
+
+    @property
+    def croma_stores_file(self) -> Path:
+        return self.data_dir / "croma_stores.json"
+
+    @property
     def seen_db(self) -> Path:
         return self.data_dir / "seen.db"
+
+    @property
+    def croma_seen_db(self) -> Path:
+        return self.data_dir / "croma_seen.db"
 
     @property
     def blacklist_db(self) -> Path:
@@ -143,4 +167,8 @@ class Settings:
         if not self.links_file.exists() and SEED_LINKS_FILE.exists():
             self.links_file.write_text(
                 SEED_LINKS_FILE.read_text(encoding="utf-8"), encoding="utf-8"
+            )
+        if not self.croma_links_file.exists() and SEED_CROMA_LINKS_FILE.exists():
+            self.croma_links_file.write_text(
+                SEED_CROMA_LINKS_FILE.read_text(encoding="utf-8"), encoding="utf-8"
             )

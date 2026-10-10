@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 log = logging.getLogger("myntra_scraper.controller")
 
 HELP_TEXT = (
-    "Myntra scraper controls:\n"
+    "Myntra + Croma deal scraper controls:\n"
     "/start — start scraping\n"
     "/stop — stop scraping\n"
     "/status — live stats\n"
@@ -31,9 +31,11 @@ HELP_TEXT = (
     "/affiliate — show current link tag (OFF = clean links)\n"
     "/set_affiliate <query> — set tag, e.g. /set_affiliate utm_source=x&utm_campaign=y\n"
     "/clear_affiliate — back to clean links\n"
-    "/add_link <myntra url> — track a search\n"
+    "/add_link <url> — track a Myntra OR Croma URL (auto-detected)\n"
     "/remove_link <url or number> — untrack\n"
-    "/list_links — tracked searches\n"
+    "/list_links — tracked URLs (Myntra + Croma)\n"
+    "/croma_stores — refresh Croma store-name map\n"
+    "/stock <product_id> — which Croma stores carry it\n"
     "/add_blacklist <brand> <min_%> — skip brand below % (e.g. /add_blacklist Nike 60)\n"
     "/remove_blacklist <brand>\n"
     "/list_blacklist\n"
@@ -116,23 +118,58 @@ class ControllerBot:
             return HELP_TEXT
         if low.startswith("/list_links") or cmd.strip() == "LIST#":
             urls = app.links.all()
-            if not urls:
-                return "No links. Use /add_link <myntra url>"
-            lines = ["Tracked links (%d):" % len(urls)]
-            lines += ["%d. %s" % (i, u[:80]) for i, u in enumerate(urls[:20], 1)]
-            if len(urls) > 20:
-                lines.append("...and %d more" % (len(urls) - 20))
+            croma_urls = app.croma_links.all()
+            if not urls and not croma_urls:
+                return "No links. Use /add_link <url>"
+            lines = []
+            if urls:
+                lines.append("Myntra (%d):" % len(urls))
+                lines += ["%d. %s" % (i, u[:80]) for i, u in enumerate(urls[:20], 1)]
+                if len(urls) > 20:
+                    lines.append("...and %d more" % (len(urls) - 20))
+            if croma_urls:
+                lines.append("")
+                lines.append("Croma (%d):" % len(croma_urls))
+                lines += ["%d. %s" % (i, u[:80]) for i, u in enumerate(croma_urls[:20], 1)]
+                if len(croma_urls) > 20:
+                    lines.append("...and %d more" % (len(croma_urls) - 20))
             return "\n".join(lines)
+        if low.startswith("/croma_stores"):
+            # Refresh the store-name map (blocking fetch in controller thread).
+            count = app.croma_stores.fetch_and_save()
+            return ("Croma store map refreshed: %d stores." % count if count
+                    else "Store fetch failed — will retry next /stock.")
+        if low.startswith("/stock"):
+            pid = (cmd.split(None, 1)[1] if " " in cmd else "").strip()
+            if not pid:
+                return "Usage: /stock <croma_product_id>"
+            row = app.croma_seen.get_product(pid)
+            if not row or not row.get("store_codes"):
+                return "No store codes cached for %s yet (try after next cycle)." % pid
+            header = "%s — %s" % (pid, row.get("name", ""))
+            return "%s\n%s" % (header, app.croma_stores.resolve_codes(row["store_codes"]))
         if low.startswith("/add_link") or cmd.startswith("ADD#"):
             url = cmd.split(None, 1)[1].strip() if " " in cmd else cmd[4:].strip()
-            if not url.startswith("http") or "myntra.com" not in url:
-                return "Only Myntra URLs allowed."
+            if not url.startswith("http"):
+                return "Only http(s) URLs allowed."
+            # Auto-route by domain: Croma → croma store, else Myntra.
+            if "croma.com" in url:
+                ok = app.croma_links.add(url)
+                return ("Croma link added. Total: %d" % len(app.croma_links.all())
+                        if ok else "Already tracked.")
+            if "myntra.com" not in url:
+                return "Only Myntra or Croma URLs allowed."
             ok = app.links.add(url)
             return ("Link added. Total: %d" % len(app.links.all())
                     if ok else "Already tracked.")
         if low.startswith("/remove_link") or cmd.startswith("REMOVE#"):
             key = cmd.split(None, 1)[1].strip() if " " in cmd else cmd[7:].strip()
-            return "Removed." if app.links.remove(key) else "Not found. See /list_links."
+            # Try Croma first if it looks like a Croma URL, else both stores.
+            if "croma.com" in key:
+                return "Removed." if app.croma_links.remove(key) else "Not found. See /list_links."
+            if app.links.remove(key):
+                return "Removed."
+            return "Removed." if app.croma_links.remove(key) else "Not found. See /list_links."
         if low.startswith("/list_blacklist"):
             rules = app.blacklist.all()
             if not rules:

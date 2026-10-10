@@ -78,6 +78,8 @@ class Product:
     url: str = ""
     image: str = ""
     rating: float = 0.0
+    source: str = "myntra"          # "myntra" | "croma" — drives link building + labels
+    store_codes: tuple = ()          # Croma only: SA-XXXX codes for STOCK#
 
     @property
     def tier(self) -> DiscountTier:
@@ -131,12 +133,78 @@ class Product:
     def format_message(self, affiliate_params: dict | str | None = None) -> str:
         tag = affiliate_params if isinstance(affiliate_params, str) else ""
         badge = deal_badge(self.discount)
-        head = "%s %d%% Off - %s %s" % (badge, self.discount,
-                                       self.brand, self.title)
+        source_tag = "🏬 Croma" if self.source == "croma" else "🛍️ Myntra"
+        head = "%s %s | %d%% Off - %s %s" % (
+            badge, source_tag, self.discount, self.brand, self.title)
+        # Croma deals link straight to the product URL (no affiliate tag scheme).
+        link = self.url if self.source == "croma" and self.url else build_deal_link(self.product_id, tag)
         return "\n".join([
             head.strip(),
             "",
             "💰 Price: ₹%d (MRP: ₹%d)" % (self.price, self.mrp),
             "",
-            build_deal_link(self.product_id, tag),
+            link,
         ])
+
+    @classmethod
+    def from_croma_item(cls, item: dict) -> "Product | None":
+        """Parse one Croma category-API product into a Product (or None).
+
+        Two Croma-specific quirks handled here:
+        - `discountValue` is often "0%" (a placeholder for store-priced deals),
+          so discount is computed from price vs mrp (what Croma displays), with
+          discountValue only as a fallback.
+        - empty `stockFlag` does NOT mean out-of-stock (online-delivery items
+          have none); we only skip on an explicit outOfStock flag.
+        """
+        try:
+            code = str(item.get("code", ""))
+            name = str(item.get("name", ""))
+            price_obj = item.get("price", {}) or {}
+            mrp_obj = item.get("mrp", {}) or {}
+            price = int(price_obj.get("value", 0) or 0)
+            mrp = int(mrp_obj.get("value", 0) or 0)
+            if not price:
+                pstr = str(price_obj.get("formattedValue", "0")).replace("₹", "").replace(",", "").strip()
+                price = int(float(pstr)) if pstr else 0
+            if not mrp:
+                mstr = str(mrp_obj.get("formattedValue", "0")).replace("₹", "").replace(",", "").strip()
+                mrp = int(float(mstr)) if mstr else price
+
+            discount = cls.calculate_discount(price, mrp)
+            if discount == 0:
+                raw = item.get("discountValue", 0)
+                if raw and str(raw).replace("%", "").strip().isdigit():
+                    discount = int(str(raw).replace("%", "").strip())
+
+            url = item.get("url", "") or ""
+            if url and not url.startswith("http"):
+                url = "https://www.croma.com%s" % url
+
+            if not code or not name or price <= 0:
+                return None
+
+            # Explicit out-of-stock → skip. Empty stockFlag is fine (online buy).
+            stock_obj = item.get("stock", {}) or {}
+            stock_status = stock_obj.get("stockLevelStatus", "") if isinstance(stock_obj, dict) else ""
+            if stock_status and stock_status == "outOfStock":
+                return None
+
+            store_codes = item.get("stockFlag", []) or []
+            if not isinstance(store_codes, list):
+                store_codes = []
+
+            return cls(
+                product_id=code,
+                brand=str(item.get("brandName", item.get("manufacturer", "")) or ""),
+                title=name,
+                price=price,
+                mrp=mrp,
+                discount=discount,
+                url=url,
+                image=str(item.get("plpImage", "") or ""),
+                source="croma",
+                store_codes=tuple(store_codes),
+            )
+        except (ValueError, TypeError, AttributeError):
+            return None

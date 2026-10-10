@@ -9,6 +9,8 @@ from datetime import datetime
 
 from myntra_scraper.config import Settings
 from myntra_scraper.controller_bot import ControllerBot
+from myntra_scraper.croma_scraper import CromaScraper
+from myntra_scraper.croma_stores import CromaStoreMapper
 from myntra_scraper.models import Product
 from myntra_scraper.notifier import DealNotifier
 from myntra_scraper.scraper import MyntraScraper
@@ -34,15 +36,27 @@ class ScraperApp:
                                      settings.affiliate_tag)
         self.controller = ControllerBot(settings.control_bot_token,
                                         settings.admin_chat_id, self)
+        # ---- Croma (sibling scraper; shares notifier + blacklist) ----
+        self.croma_links = LinkStore(settings.croma_links_file)
+        self.croma_seen = SeenStore(settings.croma_seen_db, settings.min_discount_new,
+                                    settings.min_discount_existing, settings.min_change_percent)
+        self.croma_stores = CromaStoreMapper(settings.croma_stores_file)
+        self.croma_scraper = (CromaScraper(settings.croma_impersonate,
+                                           settings.croma_concurrency,
+                                           settings.croma_max_pages,
+                                           settings.croma_channel_code)
+                              if settings.croma_enabled else None)
         self.spam_words = self._load_spam_words()
         self.affiliate_tag = self._load_affiliate_tag()
         self.notifier.set_affiliate_tag(self.affiliate_tag)
         self.scraping_enabled = True
         self.cycle_count = 0
         self.start_time = datetime.now()
-        log.info("App ready | %d links | spam=%d | blacklist=%d | affiliate=%s",
-                 len(self.links), len(self.spam_words), len(self.blacklist.all()),
-                 "OFF (clean links)" if not self.affiliate_tag else "ON")
+        log.info("App ready | myntra links: %d | croma links: %d | croma: %s | spam=%d | blacklist=%d",
+                 len(self.links), len(self.croma_links),
+                 "ON" if self.croma_scraper else "OFF",
+                 len(self.spam_words), len(self.blacklist.all()))
+        log.info("affiliate=%s", "OFF (clean links)" if not self.affiliate_tag else "ON")
 
     def _load_spam_words(self) -> set[str]:
         words = {w.lower() for w in self.settings.DEFAULT_SPAM_WORDS}
@@ -91,16 +105,12 @@ class ScraperApp:
             product.brand, product.title, product.discount)
         return (True, reason) if blocked else (False, "")
 
-    async def run_cycle(self) -> dict:
-        self.cycle_count += 1
-        started = time.time()
-        log.info("CYCLE #%d started", self.cycle_count)
-        urls = self.links.reload()
-        if not urls:
-            log.warning("No links tracked - use /add_link")
-            return {"error": "no_links"}
-        products = await self.scraper.scrape_all(urls)
-        log.info("Found %d products across %d links", len(products), len(urls))
+    def _process_products(self, products, seen_store, source: str) -> tuple[int, int]:
+        """Filter + queue a batch of products (shared by Myntra and Croma).
+
+        Applies spam/blacklist then the up-only duplicate filter, and queues
+        survivors to the shared notifier. Returns (queued, skipped).
+        """
         queued, skipped, seen_keys = 0, 0, set()
         for product in products:
             key = (product.product_id, product.price, product.discount)
@@ -112,21 +122,55 @@ class ScraperApp:
             if spam:
                 skipped += 1
                 continue
-            ok, why = self.seen.should_notify(
+            ok, why = seen_store.should_notify(
                 product.product_id, product.price, product.mrp, product.discount)
             if not ok:
                 skipped += 1
                 continue
-            self.seen.save(product.product_id, product.price, product.discount)
+            seen_store.save(product.product_id, product.price, product.discount,
+                            store_codes=getattr(product, "store_codes", ()) or None,
+                            product_name=product.title)
             self.notifier.queue(product)
             queued += 1
-            log.info("QUEUED %d%% Rs.%d %s (%s)", product.discount,
+            log.info("QUEUED [%s] %d%% Rs.%d %s (%s)", source, product.discount,
                      product.price, product.brand, why)
+        return queued, skipped
+
+    async def run_cycle(self) -> dict:
+        self.cycle_count += 1
+        started = time.time()
+        log.info("CYCLE #%d started", self.cycle_count)
+        total_queued = total_skipped = 0
+
+        # ---- Myntra ----
+        urls = self.links.reload()
+        if not urls:
+            log.warning("No Myntra links tracked - use /add_link")
+        else:
+            products = await self.scraper.scrape_all(urls)
+            log.info("Myntra: found %d products across %d links", len(products), len(urls))
+            q, s = self._process_products(products, self.seen, "myntra")
+            total_queued += q
+            total_skipped += s
+
+        # ---- Croma (sibling source, same pipeline) ----
+        if self.croma_scraper:
+            croma_urls = self.croma_links.reload()
+            if not croma_urls:
+                log.info("No Croma links tracked - use /croma_add <url>")
+            else:
+                croma_products = await self.croma_scraper.scrape_all(croma_urls)
+                log.info("Croma: found %d products across %d links",
+                         len(croma_products), len(croma_urls))
+                q, s = self._process_products(croma_products, self.croma_seen, "croma")
+                total_queued += q
+                total_skipped += s
+
         elapsed = time.time() - started
         log.info("CYCLE #%d done in %.1fs | queued=%d skipped=%d pending=%d",
-                 self.cycle_count, elapsed, queued, skipped, self.notifier.pending)
+                 self.cycle_count, elapsed, total_queued, total_skipped, self.notifier.pending)
         return {"cycle": self.cycle_count, "time": elapsed,
-                "queued": queued, "skipped": skipped}
+                "queued": total_queued, "skipped": total_skipped}
 
 
     async def run_forever(self) -> None:
@@ -153,20 +197,33 @@ class ScraperApp:
         seen = self.seen.stats()
         tg = self.notifier.stats()
         sc = self.scraper.stats()
-        return "\n".join([
+        lines = [
             "Scraper %s | uptime %s" % ("RUNNING" if self.scraping_enabled else "PAUSED", uptime),
-            "cycles: %d | links: %d" % (self.cycle_count, len(self.links)),
-            "tracked: %d | hot70+: %d | sent total: %d" % (
-                seen["tracked"], seen["hot_70plus"], seen["notifications"]),
+            "cycles: %d" % self.cycle_count,
+            "MYNTRA links: %d | tracked: %d | hot70+: %d | sent: %d" % (
+                len(self.links), seen["tracked"], seen["hot_70plus"], seen["notifications"]),
             "queue: sent=%d failed=%d pending=%d" % (tg["sent"], tg["failed"], tg["pending"]),
             "api: req=%d ok=%d err=%d (403=%d 429=%d)" % (
                 sc["requests"], sc["success"], sc["errors"],
                 sc.get("forbidden", 0), sc.get("rate_limited", 0)),
+        ]
+        if self.croma_scraper:
+            cs = self.croma_seen.stats()
+            cc = self.croma_scraper.stats()
+            lines += [
+                "CROMA links: %d | tracked: %d | stores: %d" % (
+                    len(self.croma_links), cs["tracked"], self.croma_stores.total_stores()),
+                "croma api: req=%d ok=%d err=%d (403=%d 429=%d)" % (
+                    cc["requests"], cc["success"], cc["errors"],
+                    cc.get("forbidden", 0), cc.get("rate_limited", 0)),
+            ]
+        lines += [
             "blacklist: %d rules | spam words: %d" % (
                 len(self.blacklist.all()), len(self.spam_words)),
             "affiliate: %s" % ("OFF (clean links)" if not self.affiliate_tag
                                else "ON (%s…)" % self.affiliate_tag[:40]),
-        ])
+        ]
+        return "\n".join(lines)
 
     async def shutdown(self) -> None:
         log.info("Shutting down - draining queue...")
@@ -177,4 +234,5 @@ class ScraperApp:
         self.notifier.stop()
         self.controller.stop()
         self.seen.close()
+        self.croma_seen.close()
         log.info("Goodbye after %d cycles.", self.cycle_count)

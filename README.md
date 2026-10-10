@@ -1,7 +1,9 @@
-# Myntra Scraper — Telegram-controlled deal bot
+# Myntra + Croma Scraper — Telegram-controlled deal bot
 
-Clean rebuild of the Myntra deals scraper with proper Python conventions
-and a full Telegram control bot. One service, zero hardcoded secrets.
+Clean rebuild of the Myntra deals scraper (with a full Telegram control bot),
+now running **both Myntra and Croma** as sibling sources in one deployment.
+One service, zero hardcoded secrets. Both sources share the same bot tokens,
+deal channels, up-only duplicate filter, spam/blacklist, and notifier.
 
 ## Architecture
 
@@ -12,25 +14,30 @@ myntra-scraper/
 ├── .env.example                 # copy to .env, fill secrets
 ├── Procfile / railway.json / railway.toml / nixpacks.toml / .python-version
 ├── config/
-│   └── links.txt                # seed URLs (copied to DATA_DIR on first boot)
+│   ├── links.txt                # Myntra seed URLs (copied to DATA_DIR on first boot)
+│   └── croma_links.txt          # Croma seed category URLs (same seeding)
 └── src/myntra_scraper/
     ├── __init__.py
     ├── config.py                # Settings dataclass — ALL secrets/env in one place
     ├── logging_setup.py         # logging factory (no global side effects)
-    ├── models.py                # Product dataclass + DiscountTier enum
+    ├── models.py                # Product dataclass + DiscountTier enum (myntra | croma)
     ├── token_manager.py         # Myntra /auth/v1/token (STABLE device + cookies)
+    ├── search_api.py            # Myntra search URL parsing + request building
     ├── scraper.py               # Myntra API client (async bulk scrape)
+    ├── croma_api.py             # Croma category URL parsing + request building + headers
+    ├── croma_scraper.py         # Croma API client (async bulk scrape)
+    ├── croma_stores.py          # CromaStoreMapper — SA-XXXX → store name/city (STOCK#)
     ├── stores.py                # LinkStore / SeenStore / BlacklistStore (SQLite)
     ├── notifier.py              # multi-bot Telegram sender w/ rate limiting
     ├── controller_bot.py        # control bot: /start /stop /status /diag /add_link ...
-    └── app.py                   # ScraperApp — scrape loop orchestration
+    └── app.py                   # ScraperApp — scrape-loop orchestration (both sources)
 ```
 
 ### Naming conventions used
 | Element | Convention | Example |
 |---|---|---|
 | Packages / modules / files | `snake_case` | `controller_bot.py`, `token_manager.py` |
-| Classes | `PascalCase` | `ScraperApp`, `ControllerBot` |
+| Classes | `PascalCase` | `ScraperApp`, `ControllerBot`, `CromaScraper` |
 | Functions / methods / vars | `snake_case` | `run_cycle()`, `should_notify()` |
 | Constants | `UPPER_SNAKE_CASE` | `DEFAULT_CYCLE_DELAY` |
 | Env vars | `UPPER_SNAKE_CASE` | `BOT_TOKENS`, `DATA_DIR` |
@@ -45,9 +52,11 @@ Sent to the **control bot** (token #1) in the admin chat:
 | `/stop` | stop the scrape loop (sender keeps draining) |
 | `/status` | cycles, uptime, queue, tracked products, blacklist size, api 403/429 split |
 | `/diag` | live Myntra probe: fresh token + 1 search page, reports HTTP code |
-| `/add_link <url>` | add a Myntra search URL (persists to volume) |
+| `/add_link <url>` | add a Myntra OR Croma URL (auto-detected by domain, persists to volume) |
 | `/remove_link <url-or-index>` | remove by URL or `LIST#` index |
-| `/list_links` | show tracked URLs (first 20) |
+| `/list_links` | show tracked URLs (Myntra + Croma sections) |
+| `/croma_stores` | refresh the Croma store-name map (for `/stock`) |
+| `/stock <croma_product_id>` | which Croma stores carry it (resolves SA-XXXX codes) |
 | `/add_blacklist <brand> <min_discount>` | e.g. `/add_blacklist Nike 60` — skip Nike below 60% |
 | `/remove_blacklist <brand>` | lift a brand rule |
 | `/list_blacklist` | show brand rules |
@@ -92,6 +101,11 @@ Rules persist in `blacklist.db` (SQLite, on the volume).
 | `MAX_CYCLES` | no | `0` | `0` = forever, `1` = single test cycle |
 | `PORT` | no | — | Railway injects; health server answers `OK` |
 | `LOG_LEVEL` | no | `INFO` | `DEBUG` shows per-request 403/429 detail |
+| `CROMA_ENABLED` | no | `true` | run the Croma scraper alongside Myntra |
+| `CROMA_IMPERSONATE` | no | `chrome120` | curl_cffi profile for Chroma (desktop Chrome) |
+| `CROMA_CHANNEL_CODE` | no | `400049` | Chroma store/channel code in the category API |
+| `CROMA_MAX_PAGES` | no | `10` | pages per Chroma category URL |
+| `CROMA_CONCURRENCY` | no | `6` | parallel Chroma category requests |
 
 Get your Telegram id: message `@userinfobot`, copy the number.
 

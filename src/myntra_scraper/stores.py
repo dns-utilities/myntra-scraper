@@ -94,6 +94,12 @@ class SeenStore:
         conn.execute("""CREATE TABLE IF NOT EXISTS seen (
             product_id TEXT PRIMARY KEY, last_price TEXT, last_discount INTEGER,
             first_seen TEXT, last_notified TEXT, notification_count INTEGER DEFAULT 0)""")
+        # Optional metadata columns (Croma uses these; Myntra leaves them blank).
+        for col in ("store_codes", "product_name"):
+            try:
+                conn.execute(f"ALTER TABLE seen ADD COLUMN {col} TEXT DEFAULT ''")
+            except sqlite3.OperationalError:
+                pass  # already exists
         conn.commit()
         conn.close()
         self._conn = self._connect()
@@ -124,23 +130,45 @@ class SeenStore:
                 return False, "change too small +%d%%" % change
             return True, "UP %d%%->%d%% (+%d)" % (old_discount, discount, change)
 
-    def save(self, product_id: str, price: int, discount: int) -> None:
+    def save(self, product_id: str, price: int, discount: int,
+             store_codes: list | tuple | None = None, product_name: str = "") -> None:
         now = datetime.now().isoformat()
+        codes_str = ",".join(store_codes) if store_codes else ""
         try:
             with self._lock:
                 row = self._conn.execute(
                     "SELECT notification_count FROM seen WHERE product_id=?", (product_id,)).fetchone()
                 if not row:
-                    self._conn.execute("INSERT INTO seen VALUES (?,?,?,?,?,?)",
-                                       (product_id, str(price), discount, now, now, 1))
+                    self._conn.execute(
+                        "INSERT INTO seen VALUES (?,?,?,?,?,?,?,?)",
+                        (product_id, str(price), discount, now, now, 1, codes_str, product_name))
                 else:
                     self._conn.execute(
-                        "UPDATE seen SET last_price=?, last_discount=?, last_notified=?, notification_count=? WHERE product_id=?",
-                        (str(price), discount, now, row[0] + 1, product_id))
+                        "UPDATE seen SET last_price=?, last_discount=?, last_notified=?, "
+                        "notification_count=?, store_codes=?, product_name=? WHERE product_id=?",
+                        (str(price), discount, now, row[0] + 1, codes_str, product_name, product_id))
                 self._conn.commit()
                 self._cache[product_id] = (str(price), discount)
         except Exception as exc:
             log.error("SeenStore save error: %s", exc)
+
+    def get_product(self, product_id: str) -> dict | None:
+        """Fetch stored metadata for a product (Croma STOCK# uses this)."""
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT last_price, last_discount, store_codes, product_name, "
+                "last_notified FROM seen WHERE product_id=?", (product_id,)).fetchone()
+        if not row:
+            return None
+        price, discount, codes_str, name, last_seen = row
+        return {
+            "product_id": product_id,
+            "price": price,
+            "discount": discount,
+            "name": name,
+            "last_seen": last_seen,
+            "store_codes": [c for c in (codes_str or "").split(",") if c],
+        }
 
     def forget(self, product_id: str) -> bool:
         with self._lock:
