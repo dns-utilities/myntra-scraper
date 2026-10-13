@@ -48,7 +48,9 @@ class ScraperApp:
         self.auto_clear_policy = AutoClearPolicy(
             enabled=settings.auto_clear_enabled,
             hours=settings.auto_clear_hours,
-            min_discount=settings.auto_clear_min_discount)
+            min_discount=settings.auto_clear_min_discount,
+            max_per_hour=settings.auto_clear_max_per_hour,
+            jitter_hours=settings.auto_clear_jitter_hours)
 
         self.controller = None            # wired by main/controller start
         self._deal_buttons: DealButtonHandler | None = None
@@ -63,11 +65,12 @@ class ScraperApp:
         self._alerts: dict[str, float] = {}
         self._last_prune = time.monotonic()
 
-        log.info("App ready | sources: %s | auto-clear: %s (%d brands, >=%d%%, %dh)",
+        log.info("App ready | sources: %s | auto-clear: %s (%d brands, >=%d%%, %dh + <=%dh jitter, <=%d/h)",
                  ", ".join(s.name for s in self.sources) or "none",
                  "ON" if self.auto_clear_policy.enabled else "OFF",
                  len(self.brand_registry), self.auto_clear_policy.min_discount,
-                 self.auto_clear_policy.hours)
+                 self.auto_clear_policy.hours, self.auto_clear_policy.jitter_hours,
+                 self.auto_clear_policy.max_per_hour)
         log.info("affiliate=%s", "OFF (clean links)" if not self.affiliate_tag else "ON")
 
     # -- controller wiring -------------------------------------------------
@@ -330,6 +333,14 @@ class ScraperApp:
     def status_text(self) -> str:
         uptime = datetime.now() - self.start_time
         tg = self.notifier.stats()
+        budget = self.auto_clear_policy.snapshot()
+        budget_line = (
+            "auto-clear: %s | brands=%d >=%d%% every=%dh (<=%dh jitter) | "
+            "posted this hour=%d/%d deferred=%d" % (
+                "ON" if self.auto_clear_policy.enabled else "OFF",
+                len(self.brand_registry), self.auto_clear_policy.min_discount,
+                self.auto_clear_policy.hours, self.auto_clear_policy.jitter_hours,
+                budget["used_this_hour"], budget["cap"], budget["deferred"]))
         lines = [
             "Scraper %s | uptime %s" % ("RUNNING" if self.scraping_enabled else "PAUSED", uptime),
             "ticks: %d" % self.cycle_count,
@@ -352,11 +363,7 @@ class ScraperApp:
                 lines.append("  last error: %s" % st["last_error"])
         lines += [
             "queue: sent=%d failed=%d pending=%d" % (tg["sent"], tg["failed"], tg["pending"]),
-            "auto-clear: %s | brands=%d >=%d%% every=%dh | eligible=%d" % (
-                "ON" if self.auto_clear_policy.enabled else "OFF",
-                len(self.brand_registry), self.auto_clear_policy.min_discount,
-                self.auto_clear_policy.hours,
-                sum(s.seen().stats().get("auto_clear_eligible", 0) for s in self.sources)),
+            budget_line,
             "blacklist: %d brand rules | %d product blocks" % (
                 len(self.blacklist.all()), len(self.blacklist.product_blocks())),
             "affiliate: %s" % ("OFF (clean links)" if not self.affiliate_tag

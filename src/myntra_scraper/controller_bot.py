@@ -304,15 +304,21 @@ class ControllerBot:
         app = self._app
         parts = cmd.split()
         if len(parts) == 1:
-            return ("Auto-clear: %s\nbrands=%d · min discount=%d%% · cooldown=%dh\n"
+            policy = app.auto_clear_policy
+            budget = policy.snapshot()
+            return ("Auto-clear: %s\nbrands=%d · min discount=%d%% · cooldown=%dh (+<=%dh jitter)\n"
+                    "budget=%d/hour · used this hour=%d · deferred=%d\n\n"
                     "A deal from one of these brands re-posts once the cooldown "
-                    "elapses, even at the same price.\n\n"
+                    "elapses, even at the same price. Re-posts are capped per "
+                    "hour so a restart cannot flood the channel.\n\n"
                     "/autoclear_list — show brands\n"
                     "/autoclear_add <brand> — add one\n"
                     "/autoclear_remove <brand> — remove one"
-                    % ("ON" if app.auto_clear_policy.enabled else "OFF",
-                       len(app.brand_registry), app.auto_clear_policy.min_discount,
-                       app.auto_clear_policy.hours))
+                    % ("ON" if policy.enabled else "OFF",
+                       len(app.brand_registry), policy.min_discount,
+                       policy.hours, policy.jitter_hours,
+                       policy.max_per_hour, budget["used_this_hour"],
+                       budget["deferred"]))
         sub = parts[1].lower()
         if sub == "list":
             brands = app.brand_registry.all()
@@ -397,8 +403,10 @@ class ControllerBot:
         legacy = ("ADD#", "REMOVE#", "LIST#", "CLEAR", "STATUS#", "HELP#", "#")
         is_legacy = chat_id in deal_chats and text.startswith(legacy)
         if not (is_admin or is_legacy):
-            log.warning("Controller ignoring msg from chat %s (not admin=%d): %s",
-                        chat_id, self._admin, text[:60])
+            # Expected, not exceptional: the bot sits in the deal channels, so
+            # every posted deal arrives as an update. Only DEBUG-worthy.
+            log.debug("Controller ignoring msg from chat %s: %s",
+                      chat_id, text[:60])
             return
         # An open button conversation owns the next message, whatever it says.
         buttons: DealButtonHandler | None = getattr(self._app, "_deal_buttons", None)

@@ -47,6 +47,25 @@ the 429s do.
 Retry budgets are capped and always jittered, so a fleet of failing URLs does
 not retry in lockstep.
 
+## 3a. Any loop that can re-emit needs a budget, not just a cooldown
+
+Auto-clear re-posts deals on a cooldown. With eligibility set to "evidenced
+brand at ≥50%", **hundreds** of live products qualify simultaneously — so the
+moment the process restarts after any downtime, every one of them is past its
+cooldown and they all fire in the same cycle. Observed live: 722 Croma deals
+posted in one run.
+
+A cooldown alone cannot prevent that, because "time since last post" is
+uniformly old for dormant rows. The fix is two-fold:
+
+| Guard | Why |
+|---|---|
+| `AUTO_CLEAR_MAX_PER_HOUR` | hard cap on re-posts per rolling hour — a backlog drains at a steady rate instead of flooding |
+| `AUTO_CLEAR_JITTER_HOURS` | per-product offset derived from a **stable** hash (crc32, not `hash()`, which Python randomises per process), so daily re-posts spread across the window rather than clustering |
+
+Same reasoning applies to any future source: prefer "at most N per window" over
+"once per window" for anything that fans out.
+
 ## 3. A silent zero is worse than a crash
 
 The original Myntra 403 bug produced "Found 0 products" with no error. That is

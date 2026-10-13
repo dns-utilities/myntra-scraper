@@ -156,15 +156,46 @@ with tempfile.TemporaryDirectory() as tmp:
     check("no auto-clear without policy",
           store.should_notify("P2", 300, 1500, 80, location="387001")[0], False)
 
-    # pruning: both P2 and DEAD were backdated past the 30d window.
+    # -- auto-clear budget + jitter guards --------------------------------
+    import time as _time
+    capped = AutoClearPolicy(enabled=True, hours=24, min_discount=50, max_per_hour=3)
+    check("budget starts empty", capped.snapshot()["used_this_hour"], 0)
+    spent = [capped.try_spend() for _ in range(6)]
+    check("budget caps at 3", spent, [True, True, True, False, False, False])
+    check("budget deferred counted", capped.snapshot()["deferred"], 3)
+    check("budget zero disables", AutoClearPolicy(enabled=True, max_per_hour=0).try_spend(), False)
+    # jitter must be deterministic across processes (crc32, not hash())
+    jit = AutoClearPolicy(enabled=True, hours=24, jitter_hours=6)
+    check("cooldown >= base", jit.cooldown_for("TITAN1") >= 24.0, True)
+    check("cooldown <= base+jitter", jit.cooldown_for("TITAN1") <= 30.0, True)
+    check("cooldown stable", jit.cooldown_for("TITAN1"), jit.cooldown_for("TITAN1"))
+    offsets = {jit.cooldown_for("P%d" % i) for i in range(200)}
+    check("jitter spreads products", len(offsets) > 20, True)
+    check("no jitter when disabled",
+          AutoClearPolicy(enabled=True, hours=24, jitter_hours=0).cooldown_for("X"), 24.0)
+
+    # a capped budget must suppress even a cooldown-eligible product
+    store.save("P3", 100, 80, location="387001", brand="Titan")
+    with store._lock:
+        store._conn.execute("UPDATE seen SET last_notified='2020-01-01T00:00:00'"
+                            " WHERE product_id='P3'")
+        store._conn.commit()
+    store._warm_cache(store._conn)
+    zero = AutoClearPolicy(enabled=True, hours=24, min_discount=50, max_per_hour=0)
+    check("capped budget blocks re-post",
+          store.should_notify("P3", 100, 500, 80, location="387001",
+                              auto_clear=zero)[0], False)
+
+    # pruning: P2, P3 and DEAD were all backdated past the 30d window.
     store.save("DEAD", 100, 10, location="387001")
     with store._lock:
         store._conn.execute("UPDATE seen SET last_notified='2020-01-01T00:00:00'"
-                            " WHERE product_id IN ('P2','DEAD')")
+                            " WHERE product_id IN ('P2','P3','DEAD')")
         store._conn.commit()
-    check("prune removed", store.prune(30), 2)
+    check("prune removed", store.prune(30), 3)
     check("pruned DEAD gone", store.get_product("DEAD") is None, True)
     check("pruned P2 gone", store.get_product("P2") is None, True)
+    check("pruned P3 gone", store.get_product("P3") is None, True)
     store.close()
 
 # -- blacklist: brand rules + priced product blocks -------------------------

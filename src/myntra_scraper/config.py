@@ -88,6 +88,8 @@ class Settings:
     auto_clear_enabled: bool = True
     auto_clear_hours: int = 24
     auto_clear_min_discount: int = 50
+    auto_clear_max_per_hour: int = 25
+    auto_clear_jitter_hours: int = 6
     # ---- Retention / housekeeping ----
     seen_retention_days: int = 45
     prune_interval_hours: int = 24
@@ -146,6 +148,8 @@ class Settings:
             auto_clear_enabled=os.environ.get("AUTO_CLEAR_ENABLED", "true").strip().lower() in ("1", "true", "yes", "on"),
             auto_clear_hours=_env_int("AUTO_CLEAR_HOURS", 24),
             auto_clear_min_discount=_env_int("AUTO_CLEAR_MIN_DISCOUNT", 50),
+            auto_clear_max_per_hour=_env_int("AUTO_CLEAR_MAX_PER_HOUR", 25),
+            auto_clear_jitter_hours=_env_int("AUTO_CLEAR_JITTER_HOURS", 6),
             seen_retention_days=_env_int("SEEN_RETENTION_DAYS", 45),
             prune_interval_hours=_env_int("PRUNE_INTERVAL_HOURS", 24),
             source_overrides=_parse_source_overrides(os.environ),

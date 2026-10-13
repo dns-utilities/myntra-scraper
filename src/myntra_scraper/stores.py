@@ -18,7 +18,8 @@ from __future__ import annotations
 import logging
 import sqlite3
 import threading
-from dataclasses import dataclass
+import time
+import zlib
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -84,13 +85,63 @@ class LinkStore:
         return len(self.all())
 
 
-@dataclass(frozen=True)
 class AutoClearPolicy:
-    """When a duplicate deal may re-post because it is worth repeating."""
+    """When a duplicate deal may re-post because it is worth repeating.
 
-    enabled: bool = False
-    hours: int = 24
-    min_discount: int = 50
+    Two guards keep this from becoming spam, because "evidenced brand at 50%+"
+    matches hundreds of live products at once:
+
+    * **A per-hour budget.** Auto-clear re-posts are capped per rolling hour,
+      so a restart (or a catalog where everything is eligible) drains at a
+      steady rate instead of firing hundreds of messages in one cycle.
+    * **Cooldown jitter.** Each product's cooldown gets a deterministic offset
+      derived from its id, so daily re-posts spread across the window rather
+      than clustering at the top of every hour.
+    """
+
+    def __init__(self, enabled: bool = False, hours: int = 24,
+                 min_discount: int = 50, max_per_hour: int = 25,
+                 jitter_hours: int = 6) -> None:
+        self.enabled = enabled
+        self.hours = hours
+        self.min_discount = min_discount
+        self.max_per_hour = max(0, max_per_hour)
+        self.jitter_hours = max(0, jitter_hours)
+        self._lock = threading.Lock()
+        self._window_start = time.monotonic()
+        self._used = 0
+        self.deferred = 0
+        self.spent = 0
+
+    def cooldown_for(self, product_id: str) -> float:
+        """Cooldown in hours, plus a stable per-product offset."""
+        if self.jitter_hours <= 0:
+            return float(self.hours)
+        # crc32, not hash(): Python randomises str hashes per process, which
+        # would reshuffle the offsets on every restart.
+        offset = (zlib.crc32(product_id.encode("utf-8")) % (self.jitter_hours * 3600)) / 3600.0
+        return self.hours + offset
+
+    def try_spend(self) -> bool:
+        """Claim one auto-clear slot for the current hour. False when capped."""
+        if self.max_per_hour <= 0:
+            return False
+        with self._lock:
+            now = time.monotonic()
+            if now - self._window_start >= 3600.0:
+                self._window_start = now
+                self._used = 0
+            if self._used >= self.max_per_hour:
+                self.deferred += 1
+                return False
+            self._used += 1
+            self.spent += 1
+            return True
+
+    def snapshot(self) -> dict:
+        with self._lock:
+            return {"used_this_hour": self._used, "cap": self.max_per_hour,
+                    "deferred": self.deferred, "spent": self.spent}
 
 
 class SeenStore:
@@ -242,16 +293,18 @@ class SeenStore:
             return None
         if not last_notified:
             return None
+        if not policy.try_spend():
+            return None
         try:
             last = datetime.fromisoformat(last_notified)
         except (ValueError, TypeError):
             return None
         elapsed = datetime.now() - last
-        if elapsed < timedelta(hours=policy.hours):
+        if elapsed < timedelta(hours=policy.cooldown_for(product_id)):
             return None
-        same = "same %d%%" % discount if (str(old_price) and discount == old_discount) else "%d%% (was %d%%)" % (discount, old_discount)
-        hours = elapsed.total_seconds() / 3600.0
-        return True, "AUTO-CLEAR %s, %.0fh since last post" % (same, hours)
+        same = "same %d%%" % discount if discount == old_discount else "%d%% (was %d%%)" % (discount, old_discount)
+        return True, "AUTO-CLEAR %s, %.0fh since last post" % (
+            same, elapsed.total_seconds() / 3600.0)
 
     # -- persistence ------------------------------------------------------
     def save(self, product_id: str, price: int, discount: int,

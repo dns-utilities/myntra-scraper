@@ -130,14 +130,24 @@ duplicate filter suppressed every repeat at the same price. Auto-clear gives
 * **Eligible** when the brand is in the curated registry **with real deal
   evidence** (`mentions > 0` — 617 of the 653 curated brands) **and** the
   discount is at least `AUTO_CLEAR_MIN_DISCOUNT` (default 50%).
-* Once `AUTO_CLEAR_HOURS` (default 24 h) has passed since the last post, the
-  deal re-posts even at an identical price, then the cooldown restarts.
+* Once `AUTO_CLEAR_HOURS` (default 24 h) plus a deterministic per-product
+  offset of up to `AUTO_CLEAR_JITTER_HOURS` (default 6 h) has passed since the
+  last post, the deal re-posts even at an identical price, then the cooldown
+  restarts.
+* **Capped at `AUTO_CLEAR_MAX_PER_HOUR` re-posts per hour** (default 25).
+  "Evidenced brand at 50%+" matches hundreds of live products at once, so
+  without a cap a restart drains the whole backlog into the channel in one
+  cycle. With the cap, a backlog drains at a steady rate.
 * Everything else keeps the strict up-only behaviour.
 
 The brand list is generated from `research/Brands Analysis` by
 `scripts/build_auto_clear_brands.py`, shipped as `config/auto_clear_brands.json`,
 copied to the volume on first boot, and live-editable with
 `/autoclear_add` + `/autoclear_remove` (which persist across redeploys).
+
+Tune the volume if the channels feel busy: `AUTO_CLEAR_MAX_PER_HOUR=0`
+disables re-posting entirely while keeping eligibility tracking,
+`AUTO_CLEAR_MIN_DISCOUNT=70` restricts cycling to the deepest deals only.
 
 A product blocked with 🚫 Blacklist Product never auto-clears, at any discount
 — that is the point of the priced block.
@@ -170,6 +180,8 @@ survive a genuine price drop into range.
 | `CHANNEL_90PLUS` | no | same as ALL | 90%+ deals |
 | `AUTO_CLEAR_ENABLED` | no | `true` | re-post eligible deals on a cooldown |
 | `AUTO_CLEAR_HOURS` | no | `24` | cooldown before an eligible deal may re-post |
+| `AUTO_CLEAR_MAX_PER_HOUR` | no | `25` | hard cap on auto-clear re-posts per hour |
+| `AUTO_CLEAR_JITTER_HOURS` | no | `6` | per-product cooldown spread, so re-posts don't cluster |
 | `AUTO_CLEAR_MIN_DISCOUNT` | no | `50` | min discount to be an auto-clear candidate |
 | `SEEN_RETENTION_DAYS` | no | `45` | prune seen rows not notified within this |
 | `PRUNE_INTERVAL_HOURS` | no | `24` | how often the prune sweep runs |
@@ -211,6 +223,10 @@ reasoning; the short version:
 * **Silent zeros are treated as failures** — the original Myntra 403 bug
   produced "0 products" with no error; empty runs now trip the breaker and
   alert the admin (rate-limited to one alert per source per 30 min).
+* **Deal re-posts are budgeted** — anything that can loop forever (like
+  auto-clear recycling a long-running deal) needs a hard per-hour cap and
+  jittered spacing, not just a cooldown. A cooldown alone is satisfied by
+  hundreds of products simultaneously the moment the process restarts.
 * **Retention** — the seen DB is pruned so a permanent deployment does not grow
   without bound on a finite volume.
 * **Everything is env-tunable** — a site that starts 429-ing can be slowed down
