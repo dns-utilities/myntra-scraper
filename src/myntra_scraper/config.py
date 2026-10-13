@@ -10,6 +10,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_DATA_DIR = PROJECT_ROOT / "data"
 SEED_LINKS_FILE = PROJECT_ROOT / "config" / "links.txt"
 SEED_CROMA_LINKS_FILE = PROJECT_ROOT / "config" / "croma_links.txt"
+SEED_AUTO_CLEAR_BRANDS_FILE = PROJECT_ROOT / "config" / "auto_clear_brands.json"
 
 
 def _parse_tokens(raw: str) -> list[str]:
@@ -24,6 +25,36 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
+# Per-source tunables. Env looks like SOURCE_MYNTRA_INTERVAL=600,
+# SOURCE_CROMA_RPS=4, SOURCE_BLINKIT_ENABLED=false. Anything unset falls back
+# to the source spec's own default, so adding a source never needs code edits
+# here — just env vars.
+_SOURCE_KEYS = ("ENABLED", "INTERVAL", "RPS", "MIN_DISCOUNT_NEW",
+                "MIN_DISCOUNT_EXISTING", "MAX_PAGES", "CONCURRENCY", "TIMEOUT")
+
+
+def _parse_source_overrides(env: dict) -> dict:
+    out: dict[str, dict] = {}
+    for key, raw in env.items():
+        if not key.startswith("SOURCE_") or "=" not in key:
+            continue
+        _, _, rest = key.partition("SOURCE_")
+        name, _, field = rest.rpartition("_")
+        if field not in _SOURCE_KEYS or not name:
+            continue
+        name = name.strip().lower()
+        val: object = raw.strip()
+        if field in ("ENABLED",):
+            val = str(val).lower() in ("1", "true", "yes", "on")
+        else:
+            try:
+                val = int(str(val).strip())
+            except (ValueError, AttributeError):
+                continue
+        out.setdefault(name, {})[field.lower()] = val
+    return out
+
+
 @dataclass
 class Settings:
     """All runtime configuration, loaded once at startup."""
@@ -33,6 +64,7 @@ class Settings:
     admin_chat_id: int = 0
     channel_all: int = 0
     channel_70plus: int = 0
+    channel_80plus: int = 0
     channel_90plus: int = 0
     data_dir: Path = DEFAULT_DATA_DIR
     pincode: str = "387001"
@@ -52,6 +84,15 @@ class Settings:
     croma_channel_code: str = "400049"
     croma_max_pages: int = 10
     croma_concurrency: int = 6
+    # ---- Auto-clear (re-post eligible deals on a cooldown) ----
+    auto_clear_enabled: bool = True
+    auto_clear_hours: int = 24
+    auto_clear_min_discount: int = 50
+    # ---- Retention / housekeeping ----
+    seen_retention_days: int = 45
+    prune_interval_hours: int = 24
+    # Per-source overrides, keyed by source name: {"myntra": {"interval": 600, "rps": 5}}
+    source_overrides: dict = field(default_factory=dict)
     # Deal-link tag. "" = OFF -> plain `https://www.myntra.com/<ID>`.
     # Set AFFILIATE_TAG (or /set_affiliate) later to e.g.
     # `utm_source=ugc_affiliate&utm_medium=social_share_pdp&utm_campaign=XYZ`.
@@ -72,6 +113,7 @@ class Settings:
         admin = _env_int("ADMIN_CHAT_ID", 0)
         channel_all = _env_int("CHANNEL_ALL", 0)
         channel_70 = _env_int("CHANNEL_70PLUS", channel_all)
+        channel_80 = _env_int("CHANNEL_80PLUS", channel_all)
         channel_90 = _env_int("CHANNEL_90PLUS", channel_all)
         data_dir = Path(os.environ.get("DATA_DIR", str(DEFAULT_DATA_DIR)))
         port = _env_int("PORT", 0)
@@ -81,6 +123,7 @@ class Settings:
             admin_chat_id=admin,
             channel_all=channel_all,
             channel_70plus=channel_70,
+            channel_80plus=channel_80,
             channel_90plus=channel_90,
             data_dir=data_dir,
             pincode=os.environ.get("PINCODE", "387001").strip(),
@@ -100,6 +143,12 @@ class Settings:
             croma_channel_code=os.environ.get("CROMA_CHANNEL_CODE", "400049").strip(),
             croma_max_pages=_env_int("CROMA_MAX_PAGES", 10),
             croma_concurrency=_env_int("CROMA_CONCURRENCY", 6),
+            auto_clear_enabled=os.environ.get("AUTO_CLEAR_ENABLED", "true").strip().lower() in ("1", "true", "yes", "on"),
+            auto_clear_hours=_env_int("AUTO_CLEAR_HOURS", 24),
+            auto_clear_min_discount=_env_int("AUTO_CLEAR_MIN_DISCOUNT", 50),
+            seen_retention_days=_env_int("SEEN_RETENTION_DAYS", 45),
+            prune_interval_hours=_env_int("PRUNE_INTERVAL_HOURS", 24),
+            source_overrides=_parse_source_overrides(os.environ),
         )
         settings.validate()
         return settings
@@ -143,6 +192,10 @@ class Settings:
         return self.data_dir / "blacklist.db"
 
     @property
+    def auto_clear_brands_file(self) -> Path:
+        return self.data_dir / "auto_clear_brands.json"
+
+    @property
     def spam_words_file(self) -> Path:
         return self.data_dir / "spam_words.txt"
 
@@ -159,6 +212,7 @@ class Settings:
         return {
             "all": self.channel_all,
             "70plus": self.channel_70plus,
+            "80plus": self.channel_80plus,
             "90plus": self.channel_90plus,
         }
 
@@ -171,4 +225,10 @@ class Settings:
         if not self.croma_links_file.exists() and SEED_CROMA_LINKS_FILE.exists():
             self.croma_links_file.write_text(
                 SEED_CROMA_LINKS_FILE.read_text(encoding="utf-8"), encoding="utf-8"
+            )
+        # Auto-clear brand list: shipped in the repo, copied once to the volume
+        # so live /autoclear_add + /autoclear_remove edits survive redeploys.
+        if not self.auto_clear_brands_file.exists() and SEED_AUTO_CLEAR_BRANDS_FILE.exists():
+            self.auto_clear_brands_file.write_text(
+                SEED_AUTO_CLEAR_BRANDS_FILE.read_text(encoding="utf-8"), encoding="utf-8"
             )

@@ -12,25 +12,37 @@ myntra-scraper/
 ├── main.py                      # entry point — wires config + app + shutdown
 ├── requirements.txt
 ├── .env.example                 # copy to .env, fill secrets
-├── Procfile / railway.json / railway.toml / nixpacks.toml / .python-version
+├── railway.json / .python-version
+├── docs/
+│   ├── SCRAPING-GUIDELINES.md   # politeness, circuit breakers, retention, why
+│   └── FUTURE-SOURCES.md        # Blinkit/Zepto/Instamart plan + research
 ├── config/
 │   ├── links.txt                # Myntra seed URLs (copied to DATA_DIR on first boot)
-│   └── croma_links.txt          # Croma seed category URLs (same seeding)
+│   ├── croma_links.txt          # Croma seed category URLs (same seeding)
+│   └── auto_clear_brands.json   # 617 evidenced brands (generated; see scripts/)
 └── src/myntra_scraper/
     ├── __init__.py
     ├── config.py                # Settings dataclass — ALL secrets/env in one place
     ├── logging_setup.py         # logging factory (no global side effects)
-    ├── models.py                # Product dataclass + DiscountTier enum (myntra | croma)
+    ├── models.py                # Product dataclass + DiscountTier (myntra | croma)
     ├── token_manager.py         # Myntra /auth/v1/token (STABLE device + cookies)
     ├── search_api.py            # Myntra search URL parsing + request building
     ├── scraper.py               # Myntra API client (async bulk scrape)
     ├── croma_api.py             # Croma category URL parsing + request building + headers
     ├── croma_scraper.py         # Croma API client (async bulk scrape)
     ├── croma_stores.py          # CromaStoreMapper — SA-XXXX → store name/city (STOCK#)
+    ├── sources.py               # SourceAdapter / SourceSpec / SourceHealth / rate limiter
+    ├── brand_registry.py        # auto-clear brand matching (aliases, longest-first)
+    ├── deal_buttons.py          # inline keyboard, message parser, brand-prompt flow
     ├── stores.py                # LinkStore / SeenStore / BlacklistStore (SQLite)
     ├── notifier.py              # multi-bot Telegram sender w/ rate limiting
-    ├── controller_bot.py        # control bot: /start /stop /status /diag /add_link ...
-    └── app.py                   # ScraperApp — scrape-loop orchestration (both sources)
+    ├── controller_bot.py        # control bot: /start /stop /status /diag + button pollers
+    └── app.py                   # ScraperApp — per-source scheduler + pipeline
+scripts/
+    ├── build_auto_clear_brands.py  # regenerate the auto-clear list from the registry
+    ├── smoke_test.py               # offline unit checks (tiers, seen, blacklist, buttons)
+    ├── integration_test.py         # fake source through the real pipeline
+    └── button_test.py              # simulated Telegram callback round trip
 ```
 
 ### Naming conventions used
@@ -50,8 +62,9 @@ Sent to the **control bot** (token #1) in the admin chat:
 |---|---|
 | `/start` | start the scrape loop |
 | `/stop` | stop the scrape loop (sender keeps draining) |
-| `/status` | cycles, uptime, queue, tracked products, blacklist size, api 403/429 split |
-| `/diag` | live Myntra probe: fresh token + 1 search page, reports HTTP code |
+| `/status` | per-source cycles, uptime, queue, tracked, circuit state, 403/429 split |
+| `/diag [source]` | live probe + per-source health, request/error/empty counters |
+| `/run` | force one pass over every source now |
 | `/add_link <url>` | add a Myntra OR Croma URL (auto-detected by domain, persists to volume) |
 | `/remove_link <url-or-index>` | remove by URL or `LIST#` index |
 | `/list_links` | show tracked URLs (Myntra + Croma sections) |
@@ -60,24 +73,90 @@ Sent to the **control bot** (token #1) in the admin chat:
 | `/add_blacklist <brand> <min_discount>` | e.g. `/add_blacklist Nike 60` — skip Nike below 60% |
 | `/remove_blacklist <brand>` | lift a brand rule |
 | `/list_blacklist` | show brand rules |
+| `/blacklist_product <product_id> <price>` | block one product at one price |
+| `/unblock_product <product_id> <price>` | lift that priced block |
+| `/blacklist_products` | list priced product blocks |
 | `/clear_product <product_id>` | forget a product (will re-alert as new) |
-| `/clear_all` | wipe seen database |
+| `/clear_all` | wipe seen DB |
+| `/autoclear` | auto-clear config + eligible brand count |
+| `/autoclear_list` | show auto-clear brands |
+| `/autoclear_add <brand>` / `/autoclear_remove <brand>` | edit the list (persists) |
+| `/prune` | force the seen-DB retention sweep |
+| `/affiliate` / `/set_affiliate` / `/clear_affiliate` | link tag |
 | `/help` | command list |
 
-Legacy `ADD#` / `REMOVE#` / `LIST#` / `STATUS#` / `CLEAR#` / `SPAM*#` still
-work in deal channels via the channel listener.
+Every deal message also carries two buttons:
+
+| Button | Behaviour |
+|---|---|
+| 🚫 **Blacklist Product** | one tap; blocks that `(source, product_id, price)` only. A later price drop on the same product still alerts. Comes with an ↩️ Undo button. |
+| 🏷️ **Blacklist Brand** | prompts for a percentage, then confirms with ✅/❌. Brand is resolved from the stored brand field, falling back to the message headline, then the first word of the title — so you see what will be blocked before you commit. |
+
+## Message format
+
+```
+🚨 80% Off - Titan Raga Watch For Women
+
+💰 Price: ₹1299 (MRP: ₹6495)
+
+https://www.myntra.com/ABCDEF1234
+
+App: Myntra
+```
+
+Discount badge first, then title, then price/MRP, then link, then the source
+as a plain `App:` line at the bottom (with the location in parentheses for
+location-scoped sources). No source branding in the headline.
+
+## Tier channels
+
+Bands are **non-overlapping**, so a deal posts once per channel family:
+
+| Discount | Channels |
+|---|---|
+| `< 70%` | `all` |
+| 70–79% | `all`, `70plus` |
+| 80–89% | `all`, `80plus` |
+| 90%+ | `all`, `90plus` |
+
+Badges in the headline: 95+ 💎✨ · 90+ 🔥 · 80+ 🚨.
+
+## Auto-clear
+
+Long-running deals used to post once and then go silent, because the up-only
+duplicate filter suppressed every repeat at the same price. Auto-clear gives
+*worthy* deals a second life:
+
+* **Eligible** when the brand is in the curated registry **with real deal
+  evidence** (`mentions > 0` — 617 of the 653 curated brands) **and** the
+  discount is at least `AUTO_CLEAR_MIN_DISCOUNT` (default 50%).
+* Once `AUTO_CLEAR_HOURS` (default 24 h) has passed since the last post, the
+  deal re-posts even at an identical price, then the cooldown restarts.
+* Everything else keeps the strict up-only behaviour.
+
+The brand list is generated from `research/Brands Analysis` by
+`scripts/build_auto_clear_brands.py`, shipped as `config/auto_clear_brands.json`,
+copied to the volume on first boot, and live-editable with
+`/autoclear_add` + `/autoclear_remove` (which persist across redeploys).
+
+A product blocked with 🚫 Blacklist Product never auto-clears, at any discount
+— that is the point of the priced block.
 
 ## Blacklist semantics
 
-`/add_blacklist <brand> <percent>` means: **skip this brand unless the deal
-is at least `<percent>`% off**. Brand match is case-insensitive substring
-on `brand + title`. Examples:
+Two independent rule kinds, both in `blacklist.db`:
+
+**Brand rules** — `/add_blacklist <brand> <percent>` means *skip this brand
+unless the deal is at least `<percent>`% off*. Match is a case-insensitive
+substring on `brand + title`.
 
 - `/add_blacklist nike 70` → Nike at 65% skipped, at 75% sent
 - `/add_blacklist priority 90` → Priority spam filtered unless 90%+
-- `/remove_blacklist nike` → rule deleted
 
-Rules persist in `blacklist.db` (SQLite, on the volume).
+**Product rules** — `/blacklist_product <product_id> <price>` (or the button)
+means *never post this product at this exact price*. Deliberately priced:
+blocking a 20% fridge must not silence the same fridge at 80%, and must not
+survive a genuine price drop into range.
 
 ## Environment variables (ALL secrets here — nothing hardcoded)
 
@@ -86,8 +165,17 @@ Rules persist in `blacklist.db` (SQLite, on the volume).
 | `BOT_TOKENS` | **yes** | — | comma/newline-separated bot tokens, token #1 = control bot |
 | `ADMIN_CHAT_ID` | **yes** | — | your Telegram user/chat id — only this id may control |
 | `CHANNEL_ALL` | **yes** | — | deal channel id (all deals) |
-| `CHANNEL_70PLUS` | no | same as ALL | 70%+ deals |
+| `CHANNEL_70PLUS` | no | same as ALL | 70–79% deals |
+| `CHANNEL_80PLUS` | no | same as ALL | 80–89% deals |
 | `CHANNEL_90PLUS` | no | same as ALL | 90%+ deals |
+| `AUTO_CLEAR_ENABLED` | no | `true` | re-post eligible deals on a cooldown |
+| `AUTO_CLEAR_HOURS` | no | `24` | cooldown before an eligible deal may re-post |
+| `AUTO_CLEAR_MIN_DISCOUNT` | no | `50` | min discount to be an auto-clear candidate |
+| `SEEN_RETENTION_DAYS` | no | `45` | prune seen rows not notified within this |
+| `PRUNE_INTERVAL_HOURS` | no | `24` | how often the prune sweep runs |
+| `SOURCE_<NAME>_RPS` | no | `5` | per-source request budget (polite pacing) |
+| `SOURCE_<NAME>_INTERVAL` | no | `0` | seconds between runs; `0` = every tick |
+| `SOURCE_<NAME>_MAX_PAGES` / `_CONCURRENCY` / `_MIN_DISCOUNT_*` | no | spec default | per-source overrides |
 | `DATA_DIR` | no | `./data` | `/data` on Railway volume |
 | `PINCODE` | no | `387001` | delivery pincode |
 | `CYCLE_DELAY` | no | `20` | seconds between cycles |
@@ -108,6 +196,36 @@ Rules persist in `blacklist.db` (SQLite, on the volume).
 | `CROMA_CONCURRENCY` | no | `6` | parallel Chroma category requests |
 
 Get your Telegram id: message `@userinfobot`, copy the number.
+
+## Running unattended
+
+The bot is designed to be left alone for weeks. See
+[`docs/SCRAPING-GUIDELINES.md`](docs/SCRAPING-GUIDELINES.md) for the full
+reasoning; the short version:
+
+* **Per-source politeness** — concurrency cap *and* a token-bucket request
+  budget per source, because a burst at one host is what gets an IP throttled.
+* **Per-source circuit breaker** — 5 consecutive run failures (or 3 empty
+  runs) parks that source with exponential backoff, so one broken site cannot
+  take the feed down or burn the shared egress IP.
+* **Silent zeros are treated as failures** — the original Myntra 403 bug
+  produced "0 products" with no error; empty runs now trip the breaker and
+  alert the admin (rate-limited to one alert per source per 30 min).
+* **Retention** — the seen DB is pruned so a permanent deployment does not grow
+  without bound on a finite volume.
+* **Everything is env-tunable** — a site that starts 429-ing can be slowed down
+  without a redeploy.
+
+Adding a source (Blinkit, Zepto, Instamart) is a new adapter plus env vars; see
+[`docs/FUTURE-SOURCES.md`](docs/FUTURE-SOURCES.md).
+
+## Tests
+
+```powershell
+python scripts/smoke_test.py        # tiers, seen store, blacklist, parsing
+python scripts/integration_test.py  # fake source through the real pipeline
+python scripts/button_test.py      # simulated Telegram button round trip
+```
 
 ## 403 fix (Oct 2026 — verified live: search HTTP 200, 287k products)
 

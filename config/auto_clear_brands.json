@@ -1,0 +1,5102 @@
+{
+ "generated": "2026-09-24T05:28:07.765Z",
+ "source": "research/Brands Analysis/data/brands-registry.json",
+ "rule": "brands with real deal evidence (mentions > 0); reputed-but-unseen excluded",
+ "brand_count": 617,
+ "registry_brand_count": 653,
+ "brands": [
+  {
+   "name": "Samsung",
+   "mentions": 28018,
+   "category": "smartphones",
+   "aliases": [
+    "samsung",
+    "galaxy"
+   ]
+  },
+  {
+   "name": "Lifelong",
+   "mentions": 24072,
+   "category": "home_kitchen",
+   "aliases": [
+    "lifelong"
+   ]
+  },
+  {
+   "name": "Havells",
+   "mentions": 23168,
+   "category": "appliances",
+   "aliases": [
+    "havells"
+   ]
+  },
+  {
+   "name": "Puma",
+   "mentions": 19590,
+   "category": "footwear_sports",
+   "aliases": [
+    "puma"
+   ]
+  },
+  {
+   "name": "Zebronics",
+   "mentions": 18627,
+   "category": "electronics",
+   "aliases": [
+    "zebronics"
+   ]
+  },
+  {
+   "name": "HRX",
+   "mentions": 15570,
+   "category": "fashion_apparel",
+   "aliases": [
+    "hrx"
+   ]
+  },
+  {
+   "name": "Crompton",
+   "mentions": 12975,
+   "category": "appliances",
+   "aliases": [
+    "crompton"
+   ]
+  },
+  {
+   "name": "HP",
+   "mentions": 11520,
+   "category": "electronics",
+   "aliases": [
+    "hp ",
+    "hewlett"
+   ]
+  },
+  {
+   "name": "GUESS",
+   "mentions": 11196,
+   "category": "fashion_apparel",
+   "aliases": [
+    "guess"
+   ]
+  },
+  {
+   "name": "Bajaj",
+   "mentions": 10928,
+   "category": "appliances",
+   "aliases": [
+    "bajaj"
+   ]
+  },
+  {
+   "name": "Orient Electric",
+   "mentions": 9948,
+   "category": "appliances",
+   "aliases": [
+    "orient"
+   ]
+  },
+  {
+   "name": "Flipkart Perfect Homes",
+   "mentions": 9309,
+   "category": "home_kitchen",
+   "aliases": [
+    "flipkart perfect",
+    "perfect homes"
+   ]
+  },
+  {
+   "name": "LG",
+   "mentions": 8987,
+   "category": "appliances",
+   "aliases": [
+    "lg"
+   ]
+  },
+  {
+   "name": "Realme",
+   "mentions": 8472,
+   "category": "smartphones",
+   "aliases": [
+    "realme",
+    "narzo"
+   ]
+  },
+  {
+   "name": "Safari",
+   "mentions": 8363,
+   "category": "luggage_travel",
+   "aliases": [
+    "safari"
+   ]
+  },
+  {
+   "name": "Voltas",
+   "mentions": 7952,
+   "category": "appliances",
+   "aliases": [
+    "voltas",
+    "voltas beko"
+   ]
+  },
+  {
+   "name": "Haier",
+   "mentions": 7756,
+   "category": "appliances",
+   "aliases": [
+    "haier"
+   ]
+  },
+  {
+   "name": "Whirlpool",
+   "mentions": 7709,
+   "category": "appliances",
+   "aliases": [
+    "whirlpool"
+   ]
+  },
+  {
+   "name": "Acer",
+   "mentions": 7648,
+   "category": "electronics",
+   "aliases": [
+    "acer",
+    "nitro",
+    "aspire",
+    "predator",
+    "acerpure"
+   ]
+  },
+  {
+   "name": "Motorola",
+   "mentions": 7146,
+   "category": "smartphones",
+   "aliases": [
+    "motorola",
+    "moto "
+   ]
+  },
+  {
+   "name": "Asus",
+   "mentions": 7117,
+   "category": "electronics",
+   "aliases": [
+    "asus",
+    "rog",
+    "vivobook",
+    "tuf"
+   ]
+  },
+  {
+   "name": "Lenovo",
+   "mentions": 6863,
+   "category": "electronics",
+   "aliases": [
+    "lenovo",
+    "ideapad",
+    "thinkpad",
+    "legion"
+   ]
+  },
+  {
+   "name": "Nasher Miles",
+   "mentions": 6710,
+   "category": "luggage_travel",
+   "aliases": [
+    "nasher miles",
+    "nasher",
+    "stony brook"
+   ]
+  },
+  {
+   "name": "Philips",
+   "mentions": 6690,
+   "category": "appliances",
+   "aliases": [
+    "philips",
+    "phillips"
+   ]
+  },
+  {
+   "name": "Pigeon",
+   "mentions": 6461,
+   "category": "home_kitchen",
+   "aliases": [
+    "pigeon"
+   ]
+  },
+  {
+   "name": "Kuber Industries",
+   "mentions": 6359,
+   "category": "home_kitchen",
+   "aliases": [
+    "kuber industries",
+    "kuber"
+   ]
+  },
+  {
+   "name": "Kenstar",
+   "mentions": 6037,
+   "category": "home_kitchen",
+   "aliases": [
+    "kenstar"
+   ]
+  },
+  {
+   "name": "Under Armour",
+   "mentions": 5922,
+   "category": "footwear_sports",
+   "aliases": [
+    "under armour"
+   ]
+  },
+  {
+   "name": "Godrej",
+   "mentions": 5824,
+   "category": "appliances",
+   "aliases": [
+    "godrej"
+   ]
+  },
+  {
+   "name": "Aristocrat",
+   "mentions": 5666,
+   "category": "luggage_travel",
+   "aliases": [
+    "aristocrat"
+   ]
+  },
+  {
+   "name": "House of Pataudi",
+   "mentions": 5553,
+   "category": "fashion_apparel",
+   "aliases": [
+    "house of pataudi"
+   ]
+  },
+  {
+   "name": "Nilkamal",
+   "mentions": 5542,
+   "category": "home_kitchen",
+   "aliases": [
+    "nilkamal"
+   ]
+  },
+  {
+   "name": "Home Centre",
+   "mentions": 5522,
+   "category": "home_kitchen",
+   "aliases": [
+    "home centre"
+   ]
+  },
+  {
+   "name": "United Colors of Benetton",
+   "mentions": 5487,
+   "category": "fashion_apparel",
+   "aliases": [
+    "united colors",
+    "ucb",
+    "benetton"
+   ]
+  },
+  {
+   "name": "Nike",
+   "mentions": 5393,
+   "category": "footwear_sports",
+   "aliases": [
+    "nike"
+   ]
+  },
+  {
+   "name": "Oppo",
+   "mentions": 5343,
+   "category": "smartphones",
+   "aliases": [
+    "oppo"
+   ]
+  },
+  {
+   "name": "Bosch",
+   "mentions": 5238,
+   "category": "appliances",
+   "aliases": [
+    "bosch"
+   ]
+  },
+  {
+   "name": "Redmi",
+   "mentions": 5230,
+   "category": "smartphones",
+   "aliases": [
+    "redmi"
+   ]
+  },
+  {
+   "name": "Allen Solly",
+   "mentions": 5209,
+   "category": "fashion_apparel",
+   "aliases": [
+    "allen solly"
+   ]
+  },
+  {
+   "name": "Tommy Hilfiger",
+   "mentions": 5148,
+   "category": "fashion_apparel",
+   "aliases": [
+    "tommy hilfiger",
+    "tommy"
+   ]
+  },
+  {
+   "name": "Panasonic",
+   "mentions": 5092,
+   "category": "appliances",
+   "aliases": [
+    "panasonic"
+   ]
+  },
+  {
+   "name": "IFB",
+   "mentions": 4831,
+   "category": "appliances",
+   "aliases": [
+    "ifb"
+   ]
+  },
+  {
+   "name": "Noise",
+   "mentions": 4747,
+   "category": "electronics",
+   "aliases": [
+    "noise"
+   ]
+  },
+  {
+   "name": "Wonderchef",
+   "mentions": 4745,
+   "category": "home_kitchen",
+   "aliases": [
+    "wonderchef"
+   ]
+  },
+  {
+   "name": "Apple",
+   "mentions": 4654,
+   "category": "smartphones",
+   "aliases": [
+    "apple",
+    "iphone",
+    "ipad",
+    "macbook",
+    "airpods"
+   ]
+  },
+  {
+   "name": "Sony",
+   "mentions": 4503,
+   "category": "electronics",
+   "aliases": [
+    "sony",
+    "playstation",
+    "ps5",
+    "ps4",
+    "bravia"
+   ]
+  },
+  {
+   "name": "Portronics",
+   "mentions": 4479,
+   "category": "electronics",
+   "aliases": [
+    "portronics"
+   ]
+  },
+  {
+   "name": "Red Tape",
+   "mentions": 4468,
+   "category": "footwear_sports",
+   "aliases": [
+    "red tape"
+   ]
+  },
+  {
+   "name": "Prestige",
+   "mentions": 4388,
+   "category": "home_kitchen",
+   "aliases": [
+    "prestige"
+   ]
+  },
+  {
+   "name": "Teakwood",
+   "mentions": 4260,
+   "category": "fashion_apparel",
+   "aliases": [
+    "teakwood"
+   ]
+  },
+  {
+   "name": "Inalsa",
+   "mentions": 4222,
+   "category": "home_kitchen",
+   "aliases": [
+    "inalsa"
+   ]
+  },
+  {
+   "name": "Cello",
+   "mentions": 4089,
+   "category": "home_kitchen",
+   "aliases": [
+    "cello"
+   ]
+  },
+  {
+   "name": "Bata",
+   "mentions": 4010,
+   "category": "footwear_sports",
+   "aliases": [
+    "bata"
+   ]
+  },
+  {
+   "name": "Hindware",
+   "mentions": 3871,
+   "category": "home_kitchen",
+   "aliases": [
+    "hindware"
+   ]
+  },
+  {
+   "name": "Adidas",
+   "mentions": 3870,
+   "category": "footwear_sports",
+   "aliases": [
+    "adidas"
+   ]
+  },
+  {
+   "name": "Dell",
+   "mentions": 3844,
+   "category": "electronics",
+   "aliases": [
+    "dell",
+    "alienware",
+    "inspiron",
+    "xps"
+   ]
+  },
+  {
+   "name": "AmazonBasics",
+   "mentions": 3775,
+   "category": "home_kitchen",
+   "aliases": [
+    "amazonbasics",
+    "amazon basics",
+    "amazonbasic"
+   ]
+  },
+  {
+   "name": "Himalaya",
+   "mentions": 3742,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "himalaya"
+   ]
+  },
+  {
+   "name": "Vivo",
+   "mentions": 3538,
+   "category": "smartphones",
+   "aliases": [
+    "vivo"
+   ]
+  },
+  {
+   "name": "Zouk",
+   "mentions": 3505,
+   "category": "fashion_apparel",
+   "aliases": [
+    "zouk"
+   ]
+  },
+  {
+   "name": "Livpure",
+   "mentions": 3462,
+   "category": "appliances",
+   "aliases": [
+    "livpure",
+    "livpure smart"
+   ]
+  },
+  {
+   "name": "TCL",
+   "mentions": 3429,
+   "category": "electronics",
+   "aliases": [
+    "tcl"
+   ]
+  },
+  {
+   "name": "Xiaomi",
+   "mentions": 3406,
+   "category": "smartphones",
+   "aliases": [
+    "xiaomi",
+    "mi "
+   ]
+  },
+  {
+   "name": "OnePlus",
+   "mentions": 3184,
+   "category": "smartphones",
+   "aliases": [
+    "oneplus",
+    "one plus",
+    "nord"
+   ]
+  },
+  {
+   "name": "Cetaphil",
+   "mentions": 3180,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "cetaphil"
+   ]
+  },
+  {
+   "name": "Lee",
+   "mentions": 3174,
+   "category": "fashion_apparel",
+   "aliases": [
+    "lee"
+   ]
+  },
+  {
+   "name": "Titan",
+   "mentions": 3118,
+   "category": "watches_accessories",
+   "aliases": [
+    "titan"
+   ]
+  },
+  {
+   "name": "Mokobara",
+   "mentions": 3019,
+   "category": "luggage_travel",
+   "aliases": [
+    "mokobara"
+   ]
+  },
+  {
+   "name": "Biba",
+   "mentions": 2953,
+   "category": "fashion_apparel",
+   "aliases": [
+    "biba"
+   ]
+  },
+  {
+   "name": "Borosil",
+   "mentions": 2871,
+   "category": "home_kitchen",
+   "aliases": [
+    "borosil",
+    "larah by borosil",
+    "larah"
+   ]
+  },
+  {
+   "name": "Morphy Richards",
+   "mentions": 2849,
+   "category": "appliances",
+   "aliases": [
+    "morphy richards",
+    "morphy"
+   ]
+  },
+  {
+   "name": "Roadster",
+   "mentions": 2809,
+   "category": "fashion_apparel",
+   "aliases": [
+    "roadster"
+   ]
+  },
+  {
+   "name": "Tokyo Talkies",
+   "mentions": 2776,
+   "category": "fashion_apparel",
+   "aliases": [
+    "tokyo talkies"
+   ]
+  },
+  {
+   "name": "Usha",
+   "mentions": 2773,
+   "category": "appliances",
+   "aliases": [
+    "usha"
+   ]
+  },
+  {
+   "name": "Raymond",
+   "mentions": 2766,
+   "category": "fashion_apparel",
+   "aliases": [
+    "raymond"
+   ]
+  },
+  {
+   "name": "U.S. Polo Assn.",
+   "mentions": 2740,
+   "category": "fashion_apparel",
+   "aliases": [
+    "uspa",
+    "u.s. polo",
+    "us polo assn",
+    "u.s.polo"
+   ]
+  },
+  {
+   "name": "Crocs",
+   "mentions": 2700,
+   "category": "footwear_sports",
+   "aliases": [
+    "crocs"
+   ]
+  },
+  {
+   "name": "SanDisk",
+   "mentions": 2626,
+   "category": "electronics",
+   "aliases": [
+    "sandisk"
+   ]
+  },
+  {
+   "name": "Lloyd",
+   "mentions": 2597,
+   "category": "appliances",
+   "aliases": [
+    "lloyd"
+   ]
+  },
+  {
+   "name": "Godrej Interio",
+   "mentions": 2586,
+   "category": "home_kitchen",
+   "aliases": [
+    "godrej interio",
+    "interio"
+   ]
+  },
+  {
+   "name": "DressBerry",
+   "mentions": 2582,
+   "category": "fashion_apparel",
+   "aliases": [
+    "dressberry"
+   ]
+  },
+  {
+   "name": "Intex",
+   "mentions": 2576,
+   "category": "electronics",
+   "aliases": [
+    "intex"
+   ]
+  },
+  {
+   "name": "Wipro",
+   "mentions": 2569,
+   "category": "appliances",
+   "aliases": [
+    "wipro"
+   ]
+  },
+  {
+   "name": "JBL",
+   "mentions": 2535,
+   "category": "electronics",
+   "aliases": [
+    "jbl"
+   ]
+  },
+  {
+   "name": "Wildhorn",
+   "mentions": 2526,
+   "category": "footwear_sports",
+   "aliases": [
+    "wildhorn"
+   ]
+  },
+  {
+   "name": "Anouk",
+   "mentions": 2507,
+   "category": "fashion_apparel",
+   "aliases": [
+    "anouk"
+   ]
+  },
+  {
+   "name": "Action",
+   "mentions": 2354,
+   "category": "footwear_sports",
+   "aliases": [
+    "action athleo",
+    "action shoes",
+    "action synergy"
+   ]
+  },
+  {
+   "name": "Sumeet",
+   "mentions": 2315,
+   "category": "home_kitchen",
+   "aliases": [
+    "sumeet"
+   ]
+  },
+  {
+   "name": "American Tourister",
+   "mentions": 2307,
+   "category": "luggage_travel",
+   "aliases": [
+    "american tourister",
+    "kamiliant by",
+    "kamiliant"
+   ]
+  },
+  {
+   "name": "Luminous",
+   "mentions": 2250,
+   "category": "appliances",
+   "aliases": [
+    "luminous"
+   ]
+  },
+  {
+   "name": "Faber",
+   "mentions": 2227,
+   "category": "home_kitchen",
+   "aliases": [
+    "faber"
+   ]
+  },
+  {
+   "name": "Sansui",
+   "mentions": 2221,
+   "category": "appliances",
+   "aliases": [
+    "sansui"
+   ]
+  },
+  {
+   "name": "VIP",
+   "mentions": 2205,
+   "category": "luggage_travel",
+   "aliases": [
+    "vip "
+   ]
+  },
+  {
+   "name": "boAt",
+   "mentions": 2179,
+   "category": "electronics",
+   "aliases": [
+    "boat"
+   ]
+  },
+  {
+   "name": "MSI",
+   "mentions": 2123,
+   "category": "electronics",
+   "aliases": [
+    "msi"
+   ]
+  },
+  {
+   "name": "Killer",
+   "mentions": 2073,
+   "category": "fashion_apparel",
+   "aliases": [
+    "killer"
+   ]
+  },
+  {
+   "name": "Story@Home",
+   "mentions": 2052,
+   "category": "home_kitchen",
+   "aliases": [
+    "story home",
+    "story@home"
+   ]
+  },
+  {
+   "name": "Eureka Forbes",
+   "mentions": 2051,
+   "category": "appliances",
+   "aliases": [
+    "eureka",
+    "aquaguard",
+    "forbes"
+   ]
+  },
+  {
+   "name": "Ant Esports",
+   "mentions": 2042,
+   "category": "electronics",
+   "aliases": [
+    "ant esports"
+   ]
+  },
+  {
+   "name": "Wildcraft",
+   "mentions": 1977,
+   "category": "footwear_sports",
+   "aliases": [
+    "wildcraft"
+   ]
+  },
+  {
+   "name": "Butterfly",
+   "mentions": 1928,
+   "category": "home_kitchen",
+   "aliases": [
+    "butterfly"
+   ]
+  },
+  {
+   "name": "Ariel",
+   "mentions": 1904,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "ariel"
+   ]
+  },
+  {
+   "name": "Swiss Military",
+   "mentions": 1882,
+   "category": "watches_accessories",
+   "aliases": [
+    "swiss military"
+   ]
+  },
+  {
+   "name": "MarQ",
+   "mentions": 1879,
+   "category": "appliances",
+   "aliases": [
+    "marq"
+   ]
+  },
+  {
+   "name": "URBN",
+   "mentions": 1873,
+   "category": "electronics",
+   "aliases": [
+    "urbn"
+   ]
+  },
+  {
+   "name": "Bergner",
+   "mentions": 1870,
+   "category": "home_kitchen",
+   "aliases": [
+    "bergner"
+   ]
+  },
+  {
+   "name": "Crucial",
+   "mentions": 1852,
+   "category": "electronics",
+   "aliases": [
+    "crucial"
+   ]
+  },
+  {
+   "name": "iQOO",
+   "mentions": 1819,
+   "category": "smartphones",
+   "aliases": [
+    "iqoo"
+   ]
+  },
+  {
+   "name": "Joker & Witch",
+   "mentions": 1808,
+   "category": "watches_accessories",
+   "aliases": [
+    "joker & witch",
+    "joker witch"
+   ]
+  },
+  {
+   "name": "Dabur",
+   "mentions": 1788,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "dabur"
+   ]
+  },
+  {
+   "name": "Midea",
+   "mentions": 1782,
+   "category": "appliances",
+   "aliases": [
+    "midea"
+   ]
+  },
+  {
+   "name": "Nirlon",
+   "mentions": 1774,
+   "category": "home_kitchen",
+   "aliases": [
+    "nirlon"
+   ]
+  },
+  {
+   "name": "Poco",
+   "mentions": 1712,
+   "category": "smartphones",
+   "aliases": [
+    "poco"
+   ]
+  },
+  {
+   "name": "Calvin Klein",
+   "mentions": 1696,
+   "category": "fashion_apparel",
+   "aliases": [
+    "calvin klein",
+    "ck"
+   ]
+  },
+  {
+   "name": "Carlton London",
+   "mentions": 1679,
+   "category": "fashion_apparel",
+   "aliases": [
+    "carlton london",
+    "carlton"
+   ]
+  },
+  {
+   "name": "Hisense",
+   "mentions": 1621,
+   "category": "electronics",
+   "aliases": [
+    "hisense"
+   ]
+  },
+  {
+   "name": "Yogabar",
+   "mentions": 1604,
+   "category": "health_nutrition",
+   "aliases": [
+    "yogabar",
+    "yoga bar"
+   ]
+  },
+  {
+   "name": "Ambrane",
+   "mentions": 1574,
+   "category": "electronics",
+   "aliases": [
+    "ambrane"
+   ]
+  },
+  {
+   "name": "Wrangler",
+   "mentions": 1568,
+   "category": "fashion_apparel",
+   "aliases": [
+    "wrangler"
+   ]
+  },
+  {
+   "name": "Peter England",
+   "mentions": 1487,
+   "category": "fashion_apparel",
+   "aliases": [
+    "peter england"
+   ]
+  },
+  {
+   "name": "Elica",
+   "mentions": 1444,
+   "category": "home_kitchen",
+   "aliases": [
+    "elica"
+   ]
+  },
+  {
+   "name": "Woodland",
+   "mentions": 1405,
+   "category": "footwear_sports",
+   "aliases": [
+    "woodland"
+   ]
+  },
+  {
+   "name": "SleepyHug",
+   "mentions": 1397,
+   "category": "home_kitchen",
+   "aliases": [
+    "sleepyhug"
+   ]
+  },
+  {
+   "name": "V-Guard",
+   "mentions": 1395,
+   "category": "appliances",
+   "aliases": [
+    "v-guard",
+    "vguard"
+   ]
+  },
+  {
+   "name": "Lee Cooper",
+   "mentions": 1356,
+   "category": "fashion_apparel",
+   "aliases": [
+    "lee cooper"
+   ]
+  },
+  {
+   "name": "Glen",
+   "mentions": 1354,
+   "category": "home_kitchen",
+   "aliases": [
+    "glen"
+   ]
+  },
+  {
+   "name": "Boldfit",
+   "mentions": 1331,
+   "category": "footwear_sports",
+   "aliases": [
+    "boldfit"
+   ]
+  },
+  {
+   "name": "Nakpro",
+   "mentions": 1321,
+   "category": "health_nutrition",
+   "aliases": [
+    "nakpro"
+   ]
+  },
+  {
+   "name": "Libas",
+   "mentions": 1271,
+   "category": "fashion_apparel",
+   "aliases": [
+    "libas"
+   ]
+  },
+  {
+   "name": "Park Avenue",
+   "mentions": 1236,
+   "category": "fashion_apparel",
+   "aliases": [
+    "park avenue"
+   ]
+  },
+  {
+   "name": "Mast & Harbour",
+   "mentions": 1129,
+   "category": "fashion_apparel",
+   "aliases": [
+    "mast & harbour",
+    "mast harbour"
+   ]
+  },
+  {
+   "name": "Green Soul",
+   "mentions": 1102,
+   "category": "home_kitchen",
+   "aliases": [
+    "green soul",
+    "greensoul"
+   ]
+  },
+  {
+   "name": "Halonix",
+   "mentions": 1101,
+   "category": "appliances",
+   "aliases": [
+    "halonix"
+   ]
+  },
+  {
+   "name": "Toshiba",
+   "mentions": 1100,
+   "category": "electronics",
+   "aliases": [
+    "toshiba"
+   ]
+  },
+  {
+   "name": "Pampers",
+   "mentions": 1084,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "pampers"
+   ]
+  },
+  {
+   "name": "Black & Decker",
+   "mentions": 1073,
+   "category": "appliances",
+   "aliases": [
+    "black & decker",
+    "black decker",
+    "black+decker"
+   ]
+  },
+  {
+   "name": "Blue Star",
+   "mentions": 1069,
+   "category": "appliances",
+   "aliases": [
+    "blue star",
+    "bluestar"
+   ]
+  },
+  {
+   "name": "Sharp",
+   "mentions": 1061,
+   "category": "appliances",
+   "aliases": [
+    "sharp"
+   ]
+  },
+  {
+   "name": "Kent",
+   "mentions": 1060,
+   "category": "appliances",
+   "aliases": [
+    "kent"
+   ]
+  },
+  {
+   "name": "Milton",
+   "mentions": 1058,
+   "category": "home_kitchen",
+   "aliases": [
+    "milton"
+   ]
+  },
+  {
+   "name": "Hikvision",
+   "mentions": 1030,
+   "category": "electronics",
+   "aliases": [
+    "hikvision"
+   ]
+  },
+  {
+   "name": "Bombay Shaving Company",
+   "mentions": 1016,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "bombay shaving"
+   ]
+  },
+  {
+   "name": "Atomberg",
+   "mentions": 1011,
+   "category": "appliances",
+   "aliases": [
+    "atomberg"
+   ]
+  },
+  {
+   "name": "Skechers",
+   "mentions": 989,
+   "category": "footwear_sports",
+   "aliases": [
+    "skechers"
+   ]
+  },
+  {
+   "name": "Van Heusen",
+   "mentions": 986,
+   "category": "fashion_apparel",
+   "aliases": [
+    "van heusen"
+   ]
+  },
+  {
+   "name": "Parryware",
+   "mentions": 965,
+   "category": "appliances",
+   "aliases": [
+    "parryware"
+   ]
+  },
+  {
+   "name": "Preethi",
+   "mentions": 956,
+   "category": "home_kitchen",
+   "aliases": [
+    "preethi"
+   ]
+  },
+  {
+   "name": "Hugo Boss",
+   "mentions": 955,
+   "category": "luxury",
+   "aliases": [
+    "hugo boss",
+    "boss"
+   ]
+  },
+  {
+   "name": "Pepe Jeans",
+   "mentions": 953,
+   "category": "fashion_apparel",
+   "aliases": [
+    "pepe"
+   ]
+  },
+  {
+   "name": "Polycab",
+   "mentions": 940,
+   "category": "appliances",
+   "aliases": [
+    "polycab"
+   ]
+  },
+  {
+   "name": "GIGABYTE",
+   "mentions": 927,
+   "category": "electronics",
+   "aliases": [
+    "gigabyte"
+   ]
+  },
+  {
+   "name": "MamyPoko",
+   "mentions": 925,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "mamypoko"
+   ]
+  },
+  {
+   "name": "Janasya",
+   "mentions": 896,
+   "category": "fashion_apparel",
+   "aliases": [
+    "janasya"
+   ]
+  },
+  {
+   "name": "Leader",
+   "mentions": 872,
+   "category": "footwear_sports",
+   "aliases": [
+    "leader cycle",
+    "leader"
+   ]
+  },
+  {
+   "name": "Logitech",
+   "mentions": 861,
+   "category": "electronics",
+   "aliases": [
+    "logitech"
+   ]
+  },
+  {
+   "name": "Mamaearth",
+   "mentions": 847,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "mamaearth"
+   ]
+  },
+  {
+   "name": "Ecovacs",
+   "mentions": 840,
+   "category": "appliances",
+   "aliases": [
+    "ecovacs"
+   ]
+  },
+  {
+   "name": "TP-Link",
+   "mentions": 829,
+   "category": "electronics",
+   "aliases": [
+    "tp-link",
+    "tp link"
+   ]
+  },
+  {
+   "name": "Provogue",
+   "mentions": 829,
+   "category": "fashion_apparel",
+   "aliases": [
+    "provogue"
+   ]
+  },
+  {
+   "name": "Levi's",
+   "mentions": 827,
+   "category": "fashion_apparel",
+   "aliases": [
+    "levi",
+    "levis",
+    "levi's"
+   ]
+  },
+  {
+   "name": "Skybags",
+   "mentions": 824,
+   "category": "luggage_travel",
+   "aliases": [
+    "skybags"
+   ]
+  },
+  {
+   "name": "Blaupunkt",
+   "mentions": 823,
+   "category": "electronics",
+   "aliases": [
+    "blaupunkt"
+   ]
+  },
+  {
+   "name": "Wakefit",
+   "mentions": 815,
+   "category": "home_kitchen",
+   "aliases": [
+    "wakefit"
+   ]
+  },
+  {
+   "name": "Google Pixel",
+   "mentions": 812,
+   "category": "smartphones",
+   "aliases": [
+    "pixel",
+    "google pixel",
+    "google"
+   ]
+  },
+  {
+   "name": "Carrier",
+   "mentions": 802,
+   "category": "appliances",
+   "aliases": [
+    "carrier"
+   ]
+  },
+  {
+   "name": "Thomson",
+   "mentions": 785,
+   "category": "electronics",
+   "aliases": [
+    "thomson"
+   ]
+  },
+  {
+   "name": "Reebok",
+   "mentions": 778,
+   "category": "footwear_sports",
+   "aliases": [
+    "reebok"
+   ]
+  },
+  {
+   "name": "Michael Kors",
+   "mentions": 773,
+   "category": "watches_accessories",
+   "aliases": [
+    "michael kors"
+   ]
+  },
+  {
+   "name": "Arrow",
+   "mentions": 771,
+   "category": "fashion_apparel",
+   "aliases": [
+    "arrow"
+   ]
+  },
+  {
+   "name": "Kaff",
+   "mentions": 769,
+   "category": "home_kitchen",
+   "aliases": [
+    "kaff"
+   ]
+  },
+  {
+   "name": "Greenchef",
+   "mentions": 755,
+   "category": "appliances",
+   "aliases": [
+    "greenchef"
+   ]
+  },
+  {
+   "name": "CP Plus",
+   "mentions": 746,
+   "category": "electronics",
+   "aliases": [
+    "cp plus",
+    "cpplus"
+   ]
+  },
+  {
+   "name": "Timex",
+   "mentions": 734,
+   "category": "watches_accessories",
+   "aliases": [
+    "timex"
+   ]
+  },
+  {
+   "name": "Dove",
+   "mentions": 729,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "dove"
+   ]
+  },
+  {
+   "name": "Beardo",
+   "mentions": 728,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "beardo"
+   ]
+  },
+  {
+   "name": "WROGN",
+   "mentions": 721,
+   "category": "fashion_apparel",
+   "aliases": [
+    "wrogn"
+   ]
+  },
+  {
+   "name": "Intel",
+   "mentions": 720,
+   "category": "electronics",
+   "aliases": [
+    "intel"
+   ]
+  },
+  {
+   "name": "Tecno",
+   "mentions": 716,
+   "category": "smartphones",
+   "aliases": [
+    "tecno"
+   ]
+  },
+  {
+   "name": "Kesh King",
+   "mentions": 693,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "kesh king"
+   ]
+  },
+  {
+   "name": "GNC",
+   "mentions": 692,
+   "category": "health_nutrition",
+   "aliases": [
+    "gnc"
+   ]
+  },
+  {
+   "name": "Amazon",
+   "mentions": 681,
+   "category": "electronics",
+   "aliases": [
+    "amazon brand",
+    "amazon echo",
+    "amazon fire"
+   ]
+  },
+  {
+   "name": "Urban Terrain",
+   "mentions": 662,
+   "category": "footwear_sports",
+   "aliases": [
+    "urban terrain"
+   ]
+  },
+  {
+   "name": "Singer",
+   "mentions": 648,
+   "category": "appliances",
+   "aliases": [
+    "singer"
+   ]
+  },
+  {
+   "name": "Hercules",
+   "mentions": 636,
+   "category": "footwear_sports",
+   "aliases": [
+    "hercules"
+   ]
+  },
+  {
+   "name": "WD",
+   "mentions": 632,
+   "category": "electronics",
+   "aliases": [
+    "wd ",
+    "western digital"
+   ]
+  },
+  {
+   "name": "Frontech",
+   "mentions": 632,
+   "category": "electronics",
+   "aliases": [
+    "frontech"
+   ]
+  },
+  {
+   "name": "Longway",
+   "mentions": 611,
+   "category": "appliances",
+   "aliases": [
+    "longway"
+   ]
+  },
+  {
+   "name": "Lacoste",
+   "mentions": 604,
+   "category": "fashion_apparel",
+   "aliases": [
+    "lacoste"
+   ]
+  },
+  {
+   "name": "Huggies",
+   "mentions": 599,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "huggies"
+   ]
+  },
+  {
+   "name": "French Connection",
+   "mentions": 587,
+   "category": "fashion_apparel",
+   "aliases": [
+    "french connection"
+   ]
+  },
+  {
+   "name": "Spigen",
+   "mentions": 585,
+   "category": "electronics",
+   "aliases": [
+    "spigen"
+   ]
+  },
+  {
+   "name": "DKNY",
+   "mentions": 580,
+   "category": "luxury",
+   "aliases": [
+    "dkny"
+   ]
+  },
+  {
+   "name": "Sunsilk",
+   "mentions": 575,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "sunsilk"
+   ]
+  },
+  {
+   "name": "Hitachi",
+   "mentions": 574,
+   "category": "appliances",
+   "aliases": [
+    "hitachi"
+   ]
+  },
+  {
+   "name": "Microtek",
+   "mentions": 567,
+   "category": "appliances",
+   "aliases": [
+    "microtek"
+   ]
+  },
+  {
+   "name": "Police",
+   "mentions": 566,
+   "category": "watches_accessories",
+   "aliases": [
+    "police"
+   ]
+  },
+  {
+   "name": "Casio",
+   "mentions": 558,
+   "category": "watches_accessories",
+   "aliases": [
+    "casio",
+    "g-shock",
+    "gshock"
+   ]
+  },
+  {
+   "name": "Goldmedal",
+   "mentions": 556,
+   "category": "appliances",
+   "aliases": [
+    "goldmedal"
+   ]
+  },
+  {
+   "name": "Liberty",
+   "mentions": 554,
+   "category": "footwear_sports",
+   "aliases": [
+    "liberty"
+   ]
+  },
+  {
+   "name": "Infinix",
+   "mentions": 543,
+   "category": "smartphones",
+   "aliases": [
+    "infinix"
+   ]
+  },
+  {
+   "name": "Fastrack",
+   "mentions": 538,
+   "category": "watches_accessories",
+   "aliases": [
+    "fastrack"
+   ]
+  },
+  {
+   "name": "Eveready",
+   "mentions": 532,
+   "category": "appliances",
+   "aliases": [
+    "eveready"
+   ]
+  },
+  {
+   "name": "Syska",
+   "mentions": 530,
+   "category": "appliances",
+   "aliases": [
+    "syska"
+   ]
+  },
+  {
+   "name": "Lava",
+   "mentions": 527,
+   "category": "smartphones",
+   "aliases": [
+    "lava"
+   ]
+  },
+  {
+   "name": "Nothing",
+   "mentions": 526,
+   "category": "smartphones",
+   "aliases": [
+    "nothing"
+   ]
+  },
+  {
+   "name": "Fossil",
+   "mentions": 524,
+   "category": "watches_accessories",
+   "aliases": [
+    "fossil"
+   ]
+  },
+  {
+   "name": "Lexar",
+   "mentions": 517,
+   "category": "electronics",
+   "aliases": [
+    "lexar"
+   ]
+  },
+  {
+   "name": "R for Rabbit",
+   "mentions": 514,
+   "category": "footwear_sports",
+   "aliases": [
+    "r for rabbit"
+   ]
+  },
+  {
+   "name": "Centuary",
+   "mentions": 514,
+   "category": "home_kitchen",
+   "aliases": [
+    "centuary"
+   ]
+  },
+  {
+   "name": "Fast&Up",
+   "mentions": 512,
+   "category": "health_nutrition",
+   "aliases": [
+    "fast up",
+    "fast&up",
+    "fast and up"
+   ]
+  },
+  {
+   "name": "Transcend",
+   "mentions": 509,
+   "category": "electronics",
+   "aliases": [
+    "transcend"
+   ]
+  },
+  {
+   "name": "Lakmé",
+   "mentions": 507,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "lakme",
+    "lakmé"
+   ]
+  },
+  {
+   "name": "Indo Era",
+   "mentions": 492,
+   "category": "fashion_apparel",
+   "aliases": [
+    "indo era"
+   ]
+  },
+  {
+   "name": "Fitkit",
+   "mentions": 489,
+   "category": "footwear_sports",
+   "aliases": [
+    "fitkit"
+   ]
+  },
+  {
+   "name": "Fujifilm",
+   "mentions": 485,
+   "category": "electronics",
+   "aliases": [
+    "fujifilm",
+    "instax"
+   ]
+  },
+  {
+   "name": "Racold",
+   "mentions": 480,
+   "category": "appliances",
+   "aliases": [
+    "racold"
+   ]
+  },
+  {
+   "name": "Armani",
+   "mentions": 480,
+   "category": "luxury",
+   "aliases": [
+    "emporio armani",
+    "giorgio armani"
+   ]
+  },
+  {
+   "name": "Cocosutra",
+   "mentions": 480,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "cocosutra"
+   ]
+  },
+  {
+   "name": "Asics",
+   "mentions": 472,
+   "category": "footwear_sports",
+   "aliases": [
+    "asics"
+   ]
+  },
+  {
+   "name": "Kingston",
+   "mentions": 463,
+   "category": "electronics",
+   "aliases": [
+    "kingston"
+   ]
+  },
+  {
+   "name": "Lapcare",
+   "mentions": 452,
+   "category": "electronics",
+   "aliases": [
+    "lapcare"
+   ]
+  },
+  {
+   "name": "Jio",
+   "mentions": 445,
+   "category": "electronics",
+   "aliases": [
+    "jio",
+    "jiofi"
+   ]
+  },
+  {
+   "name": "Jack & Jones",
+   "mentions": 444,
+   "category": "fashion_apparel",
+   "aliases": [
+    "jack & jones",
+    "jack and jones",
+    "jack jones"
+   ]
+  },
+  {
+   "name": "Maharaja Whiteline",
+   "mentions": 439,
+   "category": "home_kitchen",
+   "aliases": [
+    "maharaja whiteline",
+    "maharaja"
+   ]
+  },
+  {
+   "name": "Bella Vita",
+   "mentions": 438,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "bella vita",
+    "bella vita organic"
+   ]
+  },
+  {
+   "name": "Powermax Fitness",
+   "mentions": 437,
+   "category": "footwear_sports",
+   "aliases": [
+    "powermax fitness"
+   ]
+  },
+  {
+   "name": "Candy",
+   "mentions": 430,
+   "category": "appliances",
+   "aliases": [
+    "candy"
+   ]
+  },
+  {
+   "name": "iFFALCON",
+   "mentions": 417,
+   "category": "electronics",
+   "aliases": [
+    "iffalcon"
+   ]
+  },
+  {
+   "name": "Asian",
+   "mentions": 414,
+   "category": "footwear_sports",
+   "aliases": [
+    "asian boss",
+    "asian creta",
+    "asian titan",
+    "asian powerkick",
+    "asian powerplay",
+    "asian boys",
+    "asian sports",
+    "asian sneakers",
+    "asian men"
+   ]
+  },
+  {
+   "name": "MVMT",
+   "mentions": 412,
+   "category": "watches_accessories",
+   "aliases": [
+    "mvmt"
+   ]
+  },
+  {
+   "name": "Honeywell",
+   "mentions": 410,
+   "category": "appliances",
+   "aliases": [
+    "honeywell"
+   ]
+  },
+  {
+   "name": "AMD",
+   "mentions": 401,
+   "category": "electronics",
+   "aliases": [
+    "amd",
+    "ryzen"
+   ]
+  },
+  {
+   "name": "AS-IT-IS Nutrition",
+   "mentions": 399,
+   "category": "health_nutrition",
+   "aliases": [
+    "as-it-is"
+   ]
+  },
+  {
+   "name": "Canon",
+   "mentions": 396,
+   "category": "electronics",
+   "aliases": [
+    "canon",
+    "eos"
+   ]
+  },
+  {
+   "name": "Onida",
+   "mentions": 391,
+   "category": "electronics",
+   "aliases": [
+    "onida"
+   ]
+  },
+  {
+   "name": "Louis Philippe",
+   "mentions": 389,
+   "category": "fashion_apparel",
+   "aliases": [
+    "louis philippe"
+   ]
+  },
+  {
+   "name": "Exide",
+   "mentions": 387,
+   "category": "appliances",
+   "aliases": [
+    "exide"
+   ]
+  },
+  {
+   "name": "Belkin",
+   "mentions": 386,
+   "category": "electronics",
+   "aliases": [
+    "belkin"
+   ]
+  },
+  {
+   "name": "Pureit",
+   "mentions": 377,
+   "category": "appliances",
+   "aliases": [
+    "pureit"
+   ]
+  },
+  {
+   "name": "Daikin",
+   "mentions": 373,
+   "category": "appliances",
+   "aliases": [
+    "daikin"
+   ]
+  },
+  {
+   "name": "Surf Excel",
+   "mentions": 369,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "surf excel"
+   ]
+  },
+  {
+   "name": "Cockatoo",
+   "mentions": 367,
+   "category": "footwear_sports",
+   "aliases": [
+    "cockatoo"
+   ]
+  },
+  {
+   "name": "Jaguar",
+   "mentions": 365,
+   "category": "luxury",
+   "aliases": [
+    "jaguar"
+   ]
+  },
+  {
+   "name": "Lotus Herbals",
+   "mentions": 349,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "lotus herbals",
+    "lotus"
+   ]
+  },
+  {
+   "name": "GoPro",
+   "mentions": 346,
+   "category": "electronics",
+   "aliases": [
+    "gopro"
+   ]
+  },
+  {
+   "name": "PTron",
+   "mentions": 346,
+   "category": "electronics",
+   "aliases": [
+    "ptron"
+   ]
+  },
+  {
+   "name": "Crystal",
+   "mentions": 339,
+   "category": "home_kitchen",
+   "aliases": [
+    "crystal tripro",
+    "crystal aluminium",
+    "crystal aluminum",
+    "crystal"
+   ]
+  },
+  {
+   "name": "AO Smith",
+   "mentions": 328,
+   "category": "appliances",
+   "aliases": [
+    "ao smith"
+   ]
+  },
+  {
+   "name": "New Balance",
+   "mentions": 321,
+   "category": "footwear_sports",
+   "aliases": [
+    "new balance"
+   ]
+  },
+  {
+   "name": "Head & Shoulders",
+   "mentions": 320,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "head & shoulders",
+    "head and shoulders"
+   ]
+  },
+  {
+   "name": "Anchor",
+   "mentions": 312,
+   "category": "appliances",
+   "aliases": [
+    "anchor"
+   ]
+  },
+  {
+   "name": "Hafele",
+   "mentions": 311,
+   "category": "home_kitchen",
+   "aliases": [
+    "hafele"
+   ]
+  },
+  {
+   "name": "Springtek",
+   "mentions": 310,
+   "category": "home_kitchen",
+   "aliases": [
+    "springtek"
+   ]
+  },
+  {
+   "name": "Sleepwell",
+   "mentions": 307,
+   "category": "home_kitchen",
+   "aliases": [
+    "sleepwell"
+   ]
+  },
+  {
+   "name": "Citizen",
+   "mentions": 300,
+   "category": "watches_accessories",
+   "aliases": [
+    "citizen"
+   ]
+  },
+  {
+   "name": "Audio Array",
+   "mentions": 298,
+   "category": "electronics",
+   "aliases": [
+    "audio array"
+   ]
+  },
+  {
+   "name": "TRESemmé",
+   "mentions": 296,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "tresemme"
+   ]
+  },
+  {
+   "name": "Hero Cycles",
+   "mentions": 292,
+   "category": "footwear_sports",
+   "aliases": [
+    "hero cycles",
+    "hero"
+   ]
+  },
+  {
+   "name": "Marshall",
+   "mentions": 277,
+   "category": "electronics",
+   "aliases": [
+    "marshall"
+   ]
+  },
+  {
+   "name": "Nyle",
+   "mentions": 275,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "nyle"
+   ]
+  },
+  {
+   "name": "Polka Tots",
+   "mentions": 272,
+   "category": "toys_baby",
+   "aliases": [
+    "polka tots"
+   ]
+  },
+  {
+   "name": "Sangria",
+   "mentions": 270,
+   "category": "fashion_apparel",
+   "aliases": [
+    "sangria"
+   ]
+  },
+  {
+   "name": "GIVA",
+   "mentions": 270,
+   "category": "watches_accessories",
+   "aliases": [
+    "giva"
+   ]
+  },
+  {
+   "name": "Mathey-Tissot",
+   "mentions": 268,
+   "category": "watches_accessories",
+   "aliases": [
+    "mathey-tissot"
+   ]
+  },
+  {
+   "name": "Kenneth Cole",
+   "mentions": 266,
+   "category": "watches_accessories",
+   "aliases": [
+    "kenneth cole"
+   ]
+  },
+  {
+   "name": "Fena",
+   "mentions": 260,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "fena"
+   ]
+  },
+  {
+   "name": "Kurlon",
+   "mentions": 253,
+   "category": "home_kitchen",
+   "aliases": [
+    "kurlon"
+   ]
+  },
+  {
+   "name": "Tide",
+   "mentions": 248,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "tide"
+   ]
+  },
+  {
+   "name": "D-Link",
+   "mentions": 247,
+   "category": "electronics",
+   "aliases": [
+    "d-link",
+    "d link"
+   ]
+  },
+  {
+   "name": "Sunflame",
+   "mentions": 235,
+   "category": "home_kitchen",
+   "aliases": [
+    "sunflame"
+   ]
+  },
+  {
+   "name": "Nautica",
+   "mentions": 234,
+   "category": "fashion_apparel",
+   "aliases": [
+    "nautica"
+   ]
+  },
+  {
+   "name": "Corsair",
+   "mentions": 227,
+   "category": "electronics",
+   "aliases": [
+    "corsair"
+   ]
+  },
+  {
+   "name": "Karcher",
+   "mentions": 222,
+   "category": "appliances",
+   "aliases": [
+    "karcher"
+   ]
+  },
+  {
+   "name": "LuvLap",
+   "mentions": 222,
+   "category": "toys_baby",
+   "aliases": [
+    "luvlap"
+   ]
+  },
+  {
+   "name": "Fire-Boltt",
+   "mentions": 221,
+   "category": "electronics",
+   "aliases": [
+    "fire-boltt",
+    "fire boltt"
+   ]
+  },
+  {
+   "name": "BPL",
+   "mentions": 221,
+   "category": "electronics",
+   "aliases": [
+    "bpl"
+   ]
+  },
+  {
+   "name": "Ingco",
+   "mentions": 215,
+   "category": "electronics",
+   "aliases": [
+    "ingco"
+   ]
+  },
+  {
+   "name": "Miss Chase",
+   "mentions": 212,
+   "category": "fashion_apparel",
+   "aliases": [
+    "miss chase"
+   ]
+  },
+  {
+   "name": "Giordano",
+   "mentions": 212,
+   "category": "watches_accessories",
+   "aliases": [
+    "giordano"
+   ]
+  },
+  {
+   "name": "Duroflex",
+   "mentions": 212,
+   "category": "home_kitchen",
+   "aliases": [
+    "duroflex"
+   ]
+  },
+  {
+   "name": "Coocaa",
+   "mentions": 207,
+   "category": "electronics",
+   "aliases": [
+    "coocaa"
+   ]
+  },
+  {
+   "name": "DJI",
+   "mentions": 206,
+   "category": "electronics",
+   "aliases": [
+    "dji"
+   ]
+  },
+  {
+   "name": "Wobble",
+   "mentions": 200,
+   "category": "smartphones",
+   "aliases": [
+    "wobble"
+   ]
+  },
+  {
+   "name": "Sleepyhead",
+   "mentions": 200,
+   "category": "home_kitchen",
+   "aliases": [
+    "sleepyhead"
+   ]
+  },
+  {
+   "name": "Vishudh",
+   "mentions": 199,
+   "category": "fashion_apparel",
+   "aliases": [
+    "vishudh"
+   ]
+  },
+  {
+   "name": "Plum",
+   "mentions": 195,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "plum"
+   ]
+  },
+  {
+   "name": "Drools",
+   "mentions": 193,
+   "category": "pets",
+   "aliases": [
+    "drools"
+   ]
+  },
+  {
+   "name": "Pebble",
+   "mentions": 192,
+   "category": "electronics",
+   "aliases": [
+    "pebble"
+   ]
+  },
+  {
+   "name": "Ghadi",
+   "mentions": 192,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "ghadi"
+   ]
+  },
+  {
+   "name": "Laxmi Organic",
+   "mentions": 192,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "laxmi organic"
+   ]
+  },
+  {
+   "name": "Red Chief",
+   "mentions": 191,
+   "category": "footwear_sports",
+   "aliases": [
+    "red chief"
+   ]
+  },
+  {
+   "name": "Nivea",
+   "mentions": 190,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "nivea"
+   ]
+  },
+  {
+   "name": "H&M",
+   "mentions": 189,
+   "category": "fashion_apparel",
+   "aliases": [
+    "h&m",
+    "hm"
+   ]
+  },
+  {
+   "name": "Micromax",
+   "mentions": 182,
+   "category": "smartphones",
+   "aliases": [
+    "micromax",
+    "in"
+   ]
+  },
+  {
+   "name": "Bewakoof",
+   "mentions": 181,
+   "category": "fashion_apparel",
+   "aliases": [
+    "bewakoof"
+   ]
+  },
+  {
+   "name": "ADATA",
+   "mentions": 180,
+   "category": "electronics",
+   "aliases": [
+    "adata"
+   ]
+  },
+  {
+   "name": "Panash",
+   "mentions": 176,
+   "category": "watches_accessories",
+   "aliases": [
+    "panash"
+   ]
+  },
+  {
+   "name": "Campus",
+   "mentions": 175,
+   "category": "footwear_sports",
+   "aliases": [
+    "campus"
+   ]
+  },
+  {
+   "name": "Jivo",
+   "mentions": 173,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "jivo"
+   ]
+  },
+  {
+   "name": "Herbalife",
+   "mentions": 171,
+   "category": "health_nutrition",
+   "aliases": [
+    "herbalife"
+   ]
+  },
+  {
+   "name": "Maybelline",
+   "mentions": 170,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "maybelline"
+   ]
+  },
+  {
+   "name": "Diesel",
+   "mentions": 170,
+   "category": "luxury",
+   "aliases": [
+    "diesel"
+   ]
+  },
+  {
+   "name": "Miss & Chief",
+   "mentions": 170,
+   "category": "toys_baby",
+   "aliases": [
+    "miss chief"
+   ]
+  },
+  {
+   "name": "Caprese",
+   "mentions": 169,
+   "category": "luggage_travel",
+   "aliases": [
+    "caprese"
+   ]
+  },
+  {
+   "name": "Terabyte",
+   "mentions": 165,
+   "category": "luggage_travel",
+   "aliases": [
+    "terabyte"
+   ]
+  },
+  {
+   "name": "Signoraware",
+   "mentions": 165,
+   "category": "home_kitchen",
+   "aliases": [
+    "signoraware"
+   ]
+  },
+  {
+   "name": "Maxima",
+   "mentions": 163,
+   "category": "watches_accessories",
+   "aliases": [
+    "maxima"
+   ]
+  },
+  {
+   "name": "Vu",
+   "mentions": 162,
+   "category": "electronics",
+   "aliases": [
+    "vu tv",
+    "vu "
+   ]
+  },
+  {
+   "name": "Impex",
+   "mentions": 162,
+   "category": "home_kitchen",
+   "aliases": [
+    "impex"
+   ]
+  },
+  {
+   "name": "Hawkins",
+   "mentions": 161,
+   "category": "home_kitchen",
+   "aliases": [
+    "hawkins"
+   ]
+  },
+  {
+   "name": "Razer",
+   "mentions": 159,
+   "category": "electronics",
+   "aliases": [
+    "razer"
+   ]
+  },
+  {
+   "name": "The Bear House",
+   "mentions": 159,
+   "category": "fashion_apparel",
+   "aliases": [
+    "the bear house"
+   ]
+  },
+  {
+   "name": "Nokia",
+   "mentions": 156,
+   "category": "smartphones",
+   "aliases": [
+    "nokia"
+   ]
+  },
+  {
+   "name": "Hammer",
+   "mentions": 156,
+   "category": "electronics",
+   "aliases": [
+    "hammer"
+   ]
+  },
+  {
+   "name": "Sonata",
+   "mentions": 156,
+   "category": "watches_accessories",
+   "aliases": [
+    "sonata"
+   ]
+  },
+  {
+   "name": "Bose",
+   "mentions": 155,
+   "category": "electronics",
+   "aliases": [
+    "bose"
+   ]
+  },
+  {
+   "name": "Jewels Galaxy",
+   "mentions": 155,
+   "category": "watches_accessories",
+   "aliases": [
+    "jewels galaxy"
+   ]
+  },
+  {
+   "name": "Clinic Plus",
+   "mentions": 153,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "clinic plus"
+   ]
+  },
+  {
+   "name": "Amkette",
+   "mentions": 150,
+   "category": "electronics",
+   "aliases": [
+    "amkette"
+   ]
+  },
+  {
+   "name": "Pantene",
+   "mentions": 147,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "pantene"
+   ]
+  },
+  {
+   "name": "Ralph Lauren",
+   "mentions": 146,
+   "category": "luxury",
+   "aliases": [
+    "ralph lauren",
+    "polo ralph lauren"
+   ]
+  },
+  {
+   "name": "Rashee Creations",
+   "mentions": 144,
+   "category": "home_kitchen",
+   "aliases": [
+    "rashee creations"
+   ]
+  },
+  {
+   "name": "Classic Essentials",
+   "mentions": 143,
+   "category": "home_kitchen",
+   "aliases": [
+    "classic essentials"
+   ]
+  },
+  {
+   "name": "Multano Pro",
+   "mentions": 143,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "multano pro",
+    "multano"
+   ]
+  },
+  {
+   "name": "HMD",
+   "mentions": 142,
+   "category": "smartphones",
+   "aliases": [
+    "hmd",
+    "hmd global"
+   ]
+  },
+  {
+   "name": "Seagate",
+   "mentions": 141,
+   "category": "electronics",
+   "aliases": [
+    "seagate"
+   ]
+  },
+  {
+   "name": "Soundcore",
+   "mentions": 139,
+   "category": "electronics",
+   "aliases": [
+    "soundcore"
+   ]
+  },
+  {
+   "name": "Kodak",
+   "mentions": 139,
+   "category": "electronics",
+   "aliases": [
+    "kodak"
+   ]
+  },
+  {
+   "name": "Nikon",
+   "mentions": 137,
+   "category": "electronics",
+   "aliases": [
+    "nikon"
+   ]
+  },
+  {
+   "name": "Lavie",
+   "mentions": 136,
+   "category": "luggage_travel",
+   "aliases": [
+    "lavie"
+   ]
+  },
+  {
+   "name": "BigMuscles Nutrition",
+   "mentions": 135,
+   "category": "health_nutrition",
+   "aliases": [
+    "bigmuscles"
+   ]
+  },
+  {
+   "name": "BenQ",
+   "mentions": 132,
+   "category": "electronics",
+   "aliases": [
+    "benq"
+   ]
+  },
+  {
+   "name": "Elegant Weavers",
+   "mentions": 126,
+   "category": "home_kitchen",
+   "aliases": [
+    "elegant weavers"
+   ]
+  },
+  {
+   "name": "Bumtum",
+   "mentions": 126,
+   "category": "toys_baby",
+   "aliases": [
+    "bumtum"
+   ]
+  },
+  {
+   "name": "Oye Happy",
+   "mentions": 126,
+   "category": "toys_baby",
+   "aliases": [
+    "oye happy"
+   ]
+  },
+  {
+   "name": "Daniel Wellington",
+   "mentions": 123,
+   "category": "watches_accessories",
+   "aliases": [
+    "daniel wellington"
+   ]
+  },
+  {
+   "name": "Little Rides",
+   "mentions": 123,
+   "category": "toys_baby",
+   "aliases": [
+    "little rides"
+   ]
+  },
+  {
+   "name": "ZOTAC",
+   "mentions": 122,
+   "category": "electronics",
+   "aliases": [
+    "zotac"
+   ]
+  },
+  {
+   "name": "Sapphire",
+   "mentions": 121,
+   "category": "electronics",
+   "aliases": [
+    "sapphire"
+   ]
+  },
+  {
+   "name": "Louis Stitch",
+   "mentions": 121,
+   "category": "footwear_sports",
+   "aliases": [
+    "louis stitch"
+   ]
+  },
+  {
+   "name": "AOC",
+   "mentions": 119,
+   "category": "electronics",
+   "aliases": [
+    "aoc"
+   ]
+  },
+  {
+   "name": "Palmolive",
+   "mentions": 117,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "palmolive"
+   ]
+  },
+  {
+   "name": "HyperX",
+   "mentions": 116,
+   "category": "electronics",
+   "aliases": [
+    "hyperx"
+   ]
+  },
+  {
+   "name": "Kuhl",
+   "mentions": 116,
+   "category": "appliances",
+   "aliases": [
+    "kuhl"
+   ]
+  },
+  {
+   "name": "Tata Tea",
+   "mentions": 116,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "tata tea"
+   ]
+  },
+  {
+   "name": "Bissell",
+   "mentions": 114,
+   "category": "appliances",
+   "aliases": [
+    "bissell"
+   ]
+  },
+  {
+   "name": "RR Kabel",
+   "mentions": 114,
+   "category": "appliances",
+   "aliases": [
+    "rr kabel",
+    "rr signature"
+   ]
+  },
+  {
+   "name": "Sparnod Fitness",
+   "mentions": 113,
+   "category": "footwear_sports",
+   "aliases": [
+    "sparnod fitness",
+    "sparnod"
+   ]
+  },
+  {
+   "name": "Xylys",
+   "mentions": 113,
+   "category": "watches_accessories",
+   "aliases": [
+    "xylys"
+   ]
+  },
+  {
+   "name": "Nippon Paint",
+   "mentions": 113,
+   "category": "home_kitchen",
+   "aliases": [
+    "nippon paint"
+   ]
+  },
+  {
+   "name": "Kutchina",
+   "mentions": 112,
+   "category": "appliances",
+   "aliases": [
+    "kutchina"
+   ]
+  },
+  {
+   "name": "Nine West",
+   "mentions": 112,
+   "category": "fashion_apparel",
+   "aliases": [
+    "nine west"
+   ]
+  },
+  {
+   "name": "Nutrabay",
+   "mentions": 112,
+   "category": "health_nutrition",
+   "aliases": [
+    "nutrabay"
+   ]
+  },
+  {
+   "name": "Lulu & Sky",
+   "mentions": 111,
+   "category": "fashion_apparel",
+   "aliases": [
+    "lulu sky",
+    "lulu & sky"
+   ]
+  },
+  {
+   "name": "Tenda",
+   "mentions": 110,
+   "category": "electronics",
+   "aliases": [
+    "tenda"
+   ]
+  },
+  {
+   "name": "Wakeup India",
+   "mentions": 109,
+   "category": "home_kitchen",
+   "aliases": [
+    "wakeup india"
+   ]
+  },
+  {
+   "name": "Clovia",
+   "mentions": 108,
+   "category": "fashion_apparel",
+   "aliases": [
+    "clovia"
+   ]
+  },
+  {
+   "name": "Airtel",
+   "mentions": 105,
+   "category": "electronics",
+   "aliases": [
+    "airtel"
+   ]
+  },
+  {
+   "name": "Cantabil",
+   "mentions": 105,
+   "category": "fashion_apparel",
+   "aliases": [
+    "cantabil"
+   ]
+  },
+  {
+   "name": "Coach",
+   "mentions": 105,
+   "category": "luxury",
+   "aliases": [
+    "coach"
+   ]
+  },
+  {
+   "name": "Beastlife",
+   "mentions": 105,
+   "category": "health_nutrition",
+   "aliases": [
+    "beastlife"
+   ]
+  },
+  {
+   "name": "Castrol",
+   "mentions": 104,
+   "category": "auto_care",
+   "aliases": [
+    "castrol"
+   ]
+  },
+  {
+   "name": "Aqua Fresh",
+   "mentions": 102,
+   "category": "appliances",
+   "aliases": [
+    "aqua fresh",
+    "aquafresh"
+   ]
+  },
+  {
+   "name": "LaOpala",
+   "mentions": 102,
+   "category": "home_kitchen",
+   "aliases": [
+    "laopala",
+    "la opala"
+   ]
+  },
+  {
+   "name": "Compaq",
+   "mentions": 101,
+   "category": "electronics",
+   "aliases": [
+    "compaq"
+   ]
+  },
+  {
+   "name": "Set Wet",
+   "mentions": 100,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "set wet",
+    "setwet"
+   ]
+  },
+  {
+   "name": "Amazfit",
+   "mentions": 99,
+   "category": "electronics",
+   "aliases": [
+    "amazfit"
+   ]
+  },
+  {
+   "name": "Symphony",
+   "mentions": 99,
+   "category": "appliances",
+   "aliases": [
+    "symphony"
+   ]
+  },
+  {
+   "name": "Lotto",
+   "mentions": 92,
+   "category": "footwear_sports",
+   "aliases": [
+    "lotto"
+   ]
+  },
+  {
+   "name": "Cosmic Byte",
+   "mentions": 91,
+   "category": "electronics",
+   "aliases": [
+    "cosmic byte"
+   ]
+  },
+  {
+   "name": "Lila Dry Fruits",
+   "mentions": 91,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "lila dry fruits",
+    "lila dry"
+   ]
+  },
+  {
+   "name": "ViewSonic",
+   "mentions": 90,
+   "category": "electronics",
+   "aliases": [
+    "viewsonic"
+   ]
+  },
+  {
+   "name": "Boroplus",
+   "mentions": 90,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "boroplus",
+    "boro plus"
+   ]
+  },
+  {
+   "name": "Open Secret",
+   "mentions": 90,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "open secret"
+   ]
+  },
+  {
+   "name": "Yonex",
+   "mentions": 89,
+   "category": "footwear_sports",
+   "aliases": [
+    "yonex"
+   ]
+  },
+  {
+   "name": "MuscleBlaze",
+   "mentions": 88,
+   "category": "health_nutrition",
+   "aliases": [
+    "muscleblaze"
+   ]
+  },
+  {
+   "name": "Motul",
+   "mentions": 87,
+   "category": "auto_care",
+   "aliases": [
+    "motul"
+   ]
+  },
+  {
+   "name": "Eufy",
+   "mentions": 86,
+   "category": "electronics",
+   "aliases": [
+    "eufy"
+   ]
+  },
+  {
+   "name": "Patanjali",
+   "mentions": 86,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "patanjali"
+   ]
+  },
+  {
+   "name": "Youva",
+   "mentions": 86,
+   "category": "stationery_office",
+   "aliases": [
+    "youva"
+   ]
+  },
+  {
+   "name": "Rubans",
+   "mentions": 84,
+   "category": "watches_accessories",
+   "aliases": [
+    "rubans"
+   ]
+  },
+  {
+   "name": "Farm Naturelle",
+   "mentions": 84,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "farm naturelle"
+   ]
+  },
+  {
+   "name": "USI Universal",
+   "mentions": 83,
+   "category": "footwear_sports",
+   "aliases": [
+    "usi universal"
+   ]
+  },
+  {
+   "name": "Leatherkraft",
+   "mentions": 83,
+   "category": "luggage_travel",
+   "aliases": [
+    "leatherkraft"
+   ]
+  },
+  {
+   "name": "H'Decor",
+   "mentions": 83,
+   "category": "home_kitchen",
+   "aliases": [
+    "h decor"
+   ]
+  },
+  {
+   "name": "The Man Company",
+   "mentions": 82,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "the man company"
+   ]
+  },
+  {
+   "name": "Levista",
+   "mentions": 82,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "levista"
+   ]
+  },
+  {
+   "name": "Microsoft",
+   "mentions": 81,
+   "category": "electronics",
+   "aliases": [
+    "microsoft",
+    "surface"
+   ]
+  },
+  {
+   "name": "Aurelia",
+   "mentions": 81,
+   "category": "fashion_apparel",
+   "aliases": [
+    "aurelia"
+   ]
+  },
+  {
+   "name": "GOVO",
+   "mentions": 79,
+   "category": "electronics",
+   "aliases": [
+    "govo"
+   ]
+  },
+  {
+   "name": "Honor",
+   "mentions": 77,
+   "category": "smartphones",
+   "aliases": [
+    "honor"
+   ]
+  },
+  {
+   "name": "Avita",
+   "mentions": 77,
+   "category": "electronics",
+   "aliases": [
+    "avita"
+   ]
+  },
+  {
+   "name": "Skullcandy",
+   "mentions": 77,
+   "category": "electronics",
+   "aliases": [
+    "skullcandy"
+   ]
+  },
+  {
+   "name": "Durafit",
+   "mentions": 75,
+   "category": "footwear_sports",
+   "aliases": [
+    "durafit"
+   ]
+  },
+  {
+   "name": "Protecta",
+   "mentions": 74,
+   "category": "electronics",
+   "aliases": [
+    "protecta"
+   ]
+  },
+  {
+   "name": "The Indian Garage Co.",
+   "mentions": 74,
+   "category": "fashion_apparel",
+   "aliases": [
+    "the indian garage"
+   ]
+  },
+  {
+   "name": "Little Tribe",
+   "mentions": 73,
+   "category": "toys_baby",
+   "aliases": [
+    "little tribe"
+   ]
+  },
+  {
+   "name": "Sennheiser",
+   "mentions": 72,
+   "category": "electronics",
+   "aliases": [
+    "sennheiser"
+   ]
+  },
+  {
+   "name": "Vinod",
+   "mentions": 72,
+   "category": "home_kitchen",
+   "aliases": [
+    "vinod"
+   ]
+  },
+  {
+   "name": "Flying Machine",
+   "mentions": 70,
+   "category": "fashion_apparel",
+   "aliases": [
+    "flying machine"
+   ]
+  },
+  {
+   "name": "Clarks",
+   "mentions": 70,
+   "category": "footwear_sports",
+   "aliases": [
+    "clarks"
+   ]
+  },
+  {
+   "name": "iBall",
+   "mentions": 69,
+   "category": "electronics",
+   "aliases": [
+    "iball"
+   ]
+  },
+  {
+   "name": "Okaya",
+   "mentions": 69,
+   "category": "appliances",
+   "aliases": [
+    "okaya"
+   ]
+  },
+  {
+   "name": "Gant",
+   "mentions": 69,
+   "category": "watches_accessories",
+   "aliases": [
+    "gant"
+   ]
+  },
+  {
+   "name": "Minimalist",
+   "mentions": 69,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "minimalist"
+   ]
+  },
+  {
+   "name": "Daniel Klein",
+   "mentions": 68,
+   "category": "watches_accessories",
+   "aliases": [
+    "daniel klein"
+   ]
+  },
+  {
+   "name": "Engage",
+   "mentions": 67,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "engage"
+   ]
+  },
+  {
+   "name": "Insta360",
+   "mentions": 65,
+   "category": "electronics",
+   "aliases": [
+    "insta360"
+   ]
+  },
+  {
+   "name": "Ultimate Ears",
+   "mentions": 65,
+   "category": "electronics",
+   "aliases": [
+    "ultimate ears",
+    "ue boom"
+   ]
+  },
+  {
+   "name": "London Fog",
+   "mentions": 65,
+   "category": "luggage_travel",
+   "aliases": [
+    "london fog"
+   ]
+  },
+  {
+   "name": "Highlander",
+   "mentions": 63,
+   "category": "fashion_apparel",
+   "aliases": [
+    "highlander"
+   ]
+  },
+  {
+   "name": "Duracell",
+   "mentions": 62,
+   "category": "electronics",
+   "aliases": [
+    "duracell"
+   ]
+  },
+  {
+   "name": "MyFitness",
+   "mentions": 62,
+   "category": "health_nutrition",
+   "aliases": [
+    "myfitness"
+   ]
+  },
+  {
+   "name": "JK Tyre",
+   "mentions": 62,
+   "category": "auto_care",
+   "aliases": [
+    "jk tyre"
+   ]
+  },
+  {
+   "name": "Toppik",
+   "mentions": 61,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "toppik"
+   ]
+  },
+  {
+   "name": "Alfa Romeo",
+   "mentions": 61,
+   "category": "luxury",
+   "aliases": [
+    "alfa romeo"
+   ]
+  },
+  {
+   "name": "Goodyear",
+   "mentions": 61,
+   "category": "auto_care",
+   "aliases": [
+    "goodyear"
+   ]
+  },
+  {
+   "name": "Khaitan",
+   "mentions": 60,
+   "category": "home_kitchen",
+   "aliases": [
+    "khaitan"
+   ]
+  },
+  {
+   "name": "Siemens",
+   "mentions": 58,
+   "category": "appliances",
+   "aliases": [
+    "siemens"
+   ]
+  },
+  {
+   "name": "Saffola",
+   "mentions": 58,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "saffola"
+   ]
+  },
+  {
+   "name": "Kapiva",
+   "mentions": 58,
+   "category": "health_nutrition",
+   "aliases": [
+    "kapiva"
+   ]
+  },
+  {
+   "name": "Qubo",
+   "mentions": 57,
+   "category": "electronics",
+   "aliases": [
+    "qubo"
+   ]
+  },
+  {
+   "name": "Westinghouse",
+   "mentions": 56,
+   "category": "appliances",
+   "aliases": [
+    "westinghouse",
+    "white westinghouse"
+   ]
+  },
+  {
+   "name": "Hidesign",
+   "mentions": 56,
+   "category": "luggage_travel",
+   "aliases": [
+    "hidesign"
+   ]
+  },
+  {
+   "name": "Endura",
+   "mentions": 55,
+   "category": "health_nutrition",
+   "aliases": [
+    "endura"
+   ]
+  },
+  {
+   "name": "Fila",
+   "mentions": 54,
+   "category": "footwear_sports",
+   "aliases": [
+    "fila"
+   ]
+  },
+  {
+   "name": "Yellow Chimes",
+   "mentions": 54,
+   "category": "watches_accessories",
+   "aliases": [
+    "yellow chimes"
+   ]
+  },
+  {
+   "name": "mCaffeine",
+   "mentions": 54,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "mcaffeine"
+   ]
+  },
+  {
+   "name": "SASSAFRAS",
+   "mentions": 53,
+   "category": "fashion_apparel",
+   "aliases": [
+    "sassafras"
+   ]
+  },
+  {
+   "name": "Pierre Cardin",
+   "mentions": 53,
+   "category": "watches_accessories",
+   "aliases": [
+    "pierre cardin"
+   ]
+  },
+  {
+   "name": "SleepyCat",
+   "mentions": 53,
+   "category": "home_kitchen",
+   "aliases": [
+    "sleepycat"
+   ]
+  },
+  {
+   "name": "Superdry",
+   "mentions": 52,
+   "category": "fashion_apparel",
+   "aliases": [
+    "superdry"
+   ]
+  },
+  {
+   "name": "Spykar",
+   "mentions": 52,
+   "category": "fashion_apparel",
+   "aliases": [
+    "spykar"
+   ]
+  },
+  {
+   "name": "Hamilton Beach",
+   "mentions": 52,
+   "category": "home_kitchen",
+   "aliases": [
+    "hamilton beach"
+   ]
+  },
+  {
+   "name": "Judge",
+   "mentions": 52,
+   "category": "home_kitchen",
+   "aliases": [
+    "judge"
+   ]
+  },
+  {
+   "name": "ASRock",
+   "mentions": 51,
+   "category": "electronics",
+   "aliases": [
+    "asrock"
+   ]
+  },
+  {
+   "name": "Scott International",
+   "mentions": 51,
+   "category": "fashion_apparel",
+   "aliases": [
+    "scott international"
+   ]
+  },
+  {
+   "name": "Farmley",
+   "mentions": 51,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "farmley"
+   ]
+  },
+  {
+   "name": "TE-A-ME",
+   "mentions": 49,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "te a me"
+   ]
+  },
+  {
+   "name": "Prismacolor",
+   "mentions": 49,
+   "category": "stationery_office",
+   "aliases": [
+    "prismacolor"
+   ]
+  },
+  {
+   "name": "Anne Klein",
+   "mentions": 48,
+   "category": "watches_accessories",
+   "aliases": [
+    "anne klein"
+   ]
+  },
+  {
+   "name": "Khadi Natural",
+   "mentions": 48,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "khadi natural",
+    "khadi"
+   ]
+  },
+  {
+   "name": "Henko",
+   "mentions": 48,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "henko"
+   ]
+  },
+  {
+   "name": "Little Angel",
+   "mentions": 48,
+   "category": "toys_baby",
+   "aliases": [
+    "little angel"
+   ]
+  },
+  {
+   "name": "Colorful",
+   "mentions": 45,
+   "category": "electronics",
+   "aliases": [
+    "colorful"
+   ]
+  },
+  {
+   "name": "L'Occitane",
+   "mentions": 44,
+   "category": "luxury",
+   "aliases": [
+    "l occitane",
+    "occitane"
+   ]
+  },
+  {
+   "name": "Dr. Morepen",
+   "mentions": 44,
+   "category": "health_nutrition",
+   "aliases": [
+    "dr. morepen",
+    "morepen"
+   ]
+  },
+  {
+   "name": "Zaveri Pearls",
+   "mentions": 43,
+   "category": "watches_accessories",
+   "aliases": [
+    "zaveri pearls"
+   ]
+  },
+  {
+   "name": "Zoff",
+   "mentions": 43,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "zoff"
+   ]
+  },
+  {
+   "name": "Delsey",
+   "mentions": 41,
+   "category": "luggage_travel",
+   "aliases": [
+    "delsey"
+   ]
+  },
+  {
+   "name": "Ted Baker",
+   "mentions": 41,
+   "category": "watches_accessories",
+   "aliases": [
+    "ted baker"
+   ]
+  },
+  {
+   "name": "Lamborghini",
+   "mentions": 41,
+   "category": "luxury",
+   "aliases": [
+    "lamborghini"
+   ]
+  },
+  {
+   "name": "Cycle Pure",
+   "mentions": 41,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "cycle pure"
+   ]
+  },
+  {
+   "name": "Del Monte",
+   "mentions": 41,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "del monte"
+   ]
+  },
+  {
+   "name": "Alba",
+   "mentions": 40,
+   "category": "watches_accessories",
+   "aliases": [
+    "alba"
+   ]
+  },
+  {
+   "name": "Solimo",
+   "mentions": 40,
+   "category": "home_kitchen",
+   "aliases": [
+    "solimo"
+   ]
+  },
+  {
+   "name": "Optimum Nutrition",
+   "mentions": 40,
+   "category": "health_nutrition",
+   "aliases": [
+    "optimum nutrition",
+    "optimum"
+   ]
+  },
+  {
+   "name": "Liqui Moly",
+   "mentions": 40,
+   "category": "auto_care",
+   "aliases": [
+    "liqui moly"
+   ]
+  },
+  {
+   "name": "Huawei",
+   "mentions": 39,
+   "category": "smartphones",
+   "aliases": [
+    "huawei",
+    "honor magic"
+   ]
+  },
+  {
+   "name": "The Better Home",
+   "mentions": 37,
+   "category": "appliances",
+   "aliases": [
+    "the better home"
+   ]
+  },
+  {
+   "name": "Orpat",
+   "mentions": 37,
+   "category": "home_kitchen",
+   "aliases": [
+    "orpat"
+   ]
+  },
+  {
+   "name": "Being Human",
+   "mentions": 36,
+   "category": "fashion_apparel",
+   "aliases": [
+    "being human"
+   ]
+  },
+  {
+   "name": "Armani Exchange",
+   "mentions": 35,
+   "category": "watches_accessories",
+   "aliases": [
+    "armani exchange",
+    "armani"
+   ]
+  },
+  {
+   "name": "Santoor",
+   "mentions": 35,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "santoor"
+   ]
+  },
+  {
+   "name": "Natureland Organics",
+   "mentions": 35,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "natureland"
+   ]
+  },
+  {
+   "name": "Pure Nutrition",
+   "mentions": 35,
+   "category": "health_nutrition",
+   "aliases": [
+    "pure nutrition"
+   ]
+  },
+  {
+   "name": "Parachute",
+   "mentions": 34,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "parachute",
+    "parachute advansed"
+   ]
+  },
+  {
+   "name": "Vanish",
+   "mentions": 34,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "vanish"
+   ]
+  },
+  {
+   "name": "Red Label",
+   "mentions": 34,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "red label"
+   ]
+  },
+  {
+   "name": "Labrada",
+   "mentions": 34,
+   "category": "health_nutrition",
+   "aliases": [
+    "labrada"
+   ]
+  },
+  {
+   "name": "Britannia",
+   "mentions": 33,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "britannia"
+   ]
+  },
+  {
+   "name": "Aeropostale",
+   "mentions": 31,
+   "category": "fashion_apparel",
+   "aliases": [
+    "aeropostale",
+    "aero postale"
+   ]
+  },
+  {
+   "name": "Happilo",
+   "mentions": 31,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "happilo"
+   ]
+  },
+  {
+   "name": "Muscletech",
+   "mentions": 31,
+   "category": "health_nutrition",
+   "aliases": [
+    "muscletech"
+   ]
+  },
+  {
+   "name": "Su-Kam",
+   "mentions": 30,
+   "category": "appliances",
+   "aliases": [
+    "su kam",
+    "sukam"
+   ]
+  },
+  {
+   "name": "Hush Puppies",
+   "mentions": 30,
+   "category": "footwear_sports",
+   "aliases": [
+    "hush puppies"
+   ]
+  },
+  {
+   "name": "Olivia Burton",
+   "mentions": 30,
+   "category": "watches_accessories",
+   "aliases": [
+    "olivia burton"
+   ]
+  },
+  {
+   "name": "Chicco",
+   "mentions": 30,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "chicco"
+   ]
+  },
+  {
+   "name": "Garmin",
+   "mentions": 28,
+   "category": "watches_accessories",
+   "aliases": [
+    "garmin"
+   ]
+  },
+  {
+   "name": "Karachi Bakery",
+   "mentions": 28,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "karachi bakery"
+   ]
+  },
+  {
+   "name": "Faber-Castell",
+   "mentions": 28,
+   "category": "stationery_office",
+   "aliases": [
+    "faber castell"
+   ]
+  },
+  {
+   "name": "Parle",
+   "mentions": 27,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "parle"
+   ]
+  },
+  {
+   "name": "Maserati",
+   "mentions": 26,
+   "category": "watches_accessories",
+   "aliases": [
+    "maserati"
+   ]
+  },
+  {
+   "name": "Kellogg's",
+   "mentions": 26,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "kellogg",
+    "kelloggs"
+   ]
+  },
+  {
+   "name": "Bagrry's",
+   "mentions": 26,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "bagrry",
+    "bagrrys"
+   ]
+  },
+  {
+   "name": "Stanley",
+   "mentions": 25,
+   "category": "home_kitchen",
+   "aliases": [
+    "stanley"
+   ]
+  },
+  {
+   "name": "Nirma",
+   "mentions": 25,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "nirma"
+   ]
+  },
+  {
+   "name": "Decathlon",
+   "mentions": 24,
+   "category": "footwear_sports",
+   "aliases": [
+    "decathlon",
+    "kalenji",
+    "domyos",
+    "quechua",
+    "kipsta"
+   ]
+  },
+  {
+   "name": "Stryder",
+   "mentions": 24,
+   "category": "footwear_sports",
+   "aliases": [
+    "stryder"
+   ]
+  },
+  {
+   "name": "The Whole Truth",
+   "mentions": 24,
+   "category": "health_nutrition",
+   "aliases": [
+    "the whole truth",
+    "whole truth"
+   ]
+  },
+  {
+   "name": "Redragon",
+   "mentions": 23,
+   "category": "electronics",
+   "aliases": [
+    "redragon"
+   ]
+  },
+  {
+   "name": "O-General",
+   "mentions": 23,
+   "category": "appliances",
+   "aliases": [
+    "o-general",
+    "o general",
+    "og electric"
+   ]
+  },
+  {
+   "name": "IKEA",
+   "mentions": 23,
+   "category": "home_kitchen",
+   "aliases": [
+    "ikea"
+   ]
+  },
+  {
+   "name": "Cafe Coffee Day",
+   "mentions": 23,
+   "category": "home_kitchen",
+   "aliases": [
+    "cafe coffee day",
+    "ccd"
+   ]
+  },
+  {
+   "name": "Haldiram",
+   "mentions": 23,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "haldiram",
+    "haldirams"
+   ]
+  },
+  {
+   "name": "Nivia",
+   "mentions": 22,
+   "category": "footwear_sports",
+   "aliases": [
+    "nivia"
+   ]
+  },
+  {
+   "name": "True Elements",
+   "mentions": 22,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "true elements"
+   ]
+  },
+  {
+   "name": "Navneet",
+   "mentions": 22,
+   "category": "stationery_office",
+   "aliases": [
+    "navneet"
+   ]
+  },
+  {
+   "name": "Kelvinator",
+   "mentions": 21,
+   "category": "appliances",
+   "aliases": [
+    "kelvinator"
+   ]
+  },
+  {
+   "name": "Treo",
+   "mentions": 21,
+   "category": "appliances",
+   "aliases": [
+    "treo"
+   ]
+  },
+  {
+   "name": "Hummel",
+   "mentions": 20,
+   "category": "footwear_sports",
+   "aliases": [
+    "hummel"
+   ]
+  },
+  {
+   "name": "Vector X",
+   "mentions": 20,
+   "category": "footwear_sports",
+   "aliases": [
+    "vector x"
+   ]
+  },
+  {
+   "name": "MTR",
+   "mentions": 20,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "mtr"
+   ]
+  },
+  {
+   "name": "Cosco",
+   "mentions": 19,
+   "category": "footwear_sports",
+   "aliases": [
+    "cosco"
+   ]
+  },
+  {
+   "name": "Skagen",
+   "mentions": 19,
+   "category": "watches_accessories",
+   "aliases": [
+    "skagen"
+   ]
+  },
+  {
+   "name": "Davidoff",
+   "mentions": 19,
+   "category": "luxury",
+   "aliases": [
+    "davidoff"
+   ]
+  },
+  {
+   "name": "Wellcore",
+   "mentions": 19,
+   "category": "health_nutrition",
+   "aliases": [
+    "wellcore"
+   ]
+  },
+  {
+   "name": "Pedigree",
+   "mentions": 19,
+   "category": "pets",
+   "aliases": [
+    "pedigree"
+   ]
+  },
+  {
+   "name": "CEAT",
+   "mentions": 18,
+   "category": "auto_care",
+   "aliases": [
+    "ceat"
+   ]
+  },
+  {
+   "name": "Hyundai",
+   "mentions": 17,
+   "category": "electronics",
+   "aliases": [
+    "hyundai"
+   ]
+  },
+  {
+   "name": "Wild Stone",
+   "mentions": 17,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "wild stone"
+   ]
+  },
+  {
+   "name": "Fogg",
+   "mentions": 17,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "fogg"
+   ]
+  },
+  {
+   "name": "Tata 1mg",
+   "mentions": 17,
+   "category": "health_nutrition",
+   "aliases": [
+    "tata 1mg",
+    "1mg"
+   ]
+  },
+  {
+   "name": "Dr Trust",
+   "mentions": 17,
+   "category": "health_nutrition",
+   "aliases": [
+    "dr trust"
+   ]
+  },
+  {
+   "name": "Amante",
+   "mentions": 16,
+   "category": "fashion_apparel",
+   "aliases": [
+    "amante"
+   ]
+  },
+  {
+   "name": "Biotique",
+   "mentions": 16,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "biotique"
+   ]
+  },
+  {
+   "name": "Amaron",
+   "mentions": 16,
+   "category": "auto_care",
+   "aliases": [
+    "amaron"
+   ]
+  },
+  {
+   "name": "Maggi",
+   "mentions": 15,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "maggi"
+   ]
+  },
+  {
+   "name": "Dyson",
+   "mentions": 14,
+   "category": "electronics",
+   "aliases": [
+    "dyson"
+   ]
+  },
+  {
+   "name": "Manyavar",
+   "mentions": 13,
+   "category": "fashion_apparel",
+   "aliases": [
+    "manyavar"
+   ]
+  },
+  {
+   "name": "Mochi",
+   "mentions": 13,
+   "category": "watches_accessories",
+   "aliases": [
+    "mochi"
+   ]
+  },
+  {
+   "name": "Dot & Key",
+   "mentions": 13,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "dot & key",
+    "dot and key"
+   ]
+  },
+  {
+   "name": "Dettol",
+   "mentions": 13,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "dettol"
+   ]
+  },
+  {
+   "name": "Lux",
+   "mentions": 13,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "lux"
+   ]
+  },
+  {
+   "name": "Rin",
+   "mentions": 13,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "rin"
+   ]
+  },
+  {
+   "name": "Amul",
+   "mentions": 13,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "amul"
+   ]
+  },
+  {
+   "name": "Hot Wheels",
+   "mentions": 13,
+   "category": "toys_baby",
+   "aliases": [
+    "hot wheels"
+   ]
+  },
+  {
+   "name": "Mitashi",
+   "mentions": 12,
+   "category": "electronics",
+   "aliases": [
+    "mitashi"
+   ]
+  },
+  {
+   "name": "Synology",
+   "mentions": 12,
+   "category": "electronics",
+   "aliases": [
+    "synology"
+   ]
+  },
+  {
+   "name": "Avon Cycles",
+   "mentions": 12,
+   "category": "footwear_sports",
+   "aliases": [
+    "avon cycles"
+   ]
+  },
+  {
+   "name": "Cultsport",
+   "mentions": 12,
+   "category": "footwear_sports",
+   "aliases": [
+    "cultsport"
+   ]
+  },
+  {
+   "name": "Balmain",
+   "mentions": 12,
+   "category": "luxury",
+   "aliases": [
+    "balmain"
+   ]
+  },
+  {
+   "name": "Royal Canin",
+   "mentions": 12,
+   "category": "pets",
+   "aliases": [
+    "royal canin"
+   ]
+  },
+  {
+   "name": "NVIDIA",
+   "mentions": 11,
+   "category": "electronics",
+   "aliases": [
+    "nvidia"
+   ]
+  },
+  {
+   "name": "Global Desi",
+   "mentions": 11,
+   "category": "fashion_apparel",
+   "aliases": [
+    "global desi"
+   ]
+  },
+  {
+   "name": "Corelle",
+   "mentions": 11,
+   "category": "home_kitchen",
+   "aliases": [
+    "corelle"
+   ]
+  },
+  {
+   "name": "Colgate",
+   "mentions": 11,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "colgate"
+   ]
+  },
+  {
+   "name": "Forever 21",
+   "mentions": 10,
+   "category": "fashion_apparel",
+   "aliases": [
+    "forever 21"
+   ]
+  },
+  {
+   "name": "Firefox",
+   "mentions": 10,
+   "category": "footwear_sports",
+   "aliases": [
+    "firefox"
+   ]
+  },
+  {
+   "name": "Baggit",
+   "mentions": 10,
+   "category": "luggage_travel",
+   "aliases": [
+    "baggit"
+   ]
+  },
+  {
+   "name": "Weikfield",
+   "mentions": 10,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "weikfield"
+   ]
+  },
+  {
+   "name": "Nayasa",
+   "mentions": 9,
+   "category": "home_kitchen",
+   "aliases": [
+    "nayasa"
+   ]
+  },
+  {
+   "name": "Bare Anatomy",
+   "mentions": 9,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "bare anatomy"
+   ]
+  },
+  {
+   "name": "Bold Care",
+   "mentions": 9,
+   "category": "health_nutrition",
+   "aliases": [
+    "bold care"
+   ]
+  },
+  {
+   "name": "Xbox",
+   "mentions": 8,
+   "category": "electronics",
+   "aliases": [
+    "xbox"
+   ]
+  },
+  {
+   "name": "NETGEAR",
+   "mentions": 8,
+   "category": "electronics",
+   "aliases": [
+    "netgear"
+   ]
+  },
+  {
+   "name": "Jockey",
+   "mentions": 8,
+   "category": "fashion_apparel",
+   "aliases": [
+    "jockey"
+   ]
+  },
+  {
+   "name": "Myprotein",
+   "mentions": 8,
+   "category": "health_nutrition",
+   "aliases": [
+    "myprotein"
+   ]
+  },
+  {
+   "name": "Classmate",
+   "mentions": 8,
+   "category": "stationery_office",
+   "aliases": [
+    "classmate"
+   ]
+  },
+  {
+   "name": "Kindle",
+   "mentions": 7,
+   "category": "electronics",
+   "aliases": [
+    "kindle"
+   ]
+  },
+  {
+   "name": "Jaquar",
+   "mentions": 7,
+   "category": "appliances",
+   "aliases": [
+    "jaquar"
+   ]
+  },
+  {
+   "name": "Sparx",
+   "mentions": 7,
+   "category": "footwear_sports",
+   "aliases": [
+    "sparx"
+   ]
+  },
+  {
+   "name": "Ponds",
+   "mentions": 7,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "ponds",
+    "pond's"
+   ]
+  },
+  {
+   "name": "Cadbury",
+   "mentions": 7,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "cadbury",
+    "dairy milk"
+   ]
+  },
+  {
+   "name": "BlackBerry",
+   "mentions": 6,
+   "category": "smartphones",
+   "aliases": [
+    "blackberry"
+   ]
+  },
+  {
+   "name": "Wonderland Foods",
+   "mentions": 6,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "wonderland foods"
+   ]
+  },
+  {
+   "name": "HealthifyMe",
+   "mentions": 6,
+   "category": "health_nutrition",
+   "aliases": [
+    "healthifyme"
+   ]
+  },
+  {
+   "name": "Barbie",
+   "mentions": 6,
+   "category": "toys_baby",
+   "aliases": [
+    "barbie"
+   ]
+  },
+  {
+   "name": "Vero Moda",
+   "mentions": 5,
+   "category": "fashion_apparel",
+   "aliases": [
+    "vero moda"
+   ]
+  },
+  {
+   "name": "Olay",
+   "mentions": 5,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "olay"
+   ]
+  },
+  {
+   "name": "Johnson's Baby",
+   "mentions": 5,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "johnsons baby",
+    "johnson baby",
+    "johnson"
+   ]
+  },
+  {
+   "name": "MRF",
+   "mentions": 5,
+   "category": "auto_care",
+   "aliases": [
+    "mrf"
+   ]
+  },
+  {
+   "name": "Lego",
+   "mentions": 5,
+   "category": "toys_baby",
+   "aliases": [
+    "lego"
+   ]
+  },
+  {
+   "name": "Natraj",
+   "mentions": 4,
+   "category": "home_kitchen",
+   "aliases": [
+    "natraj"
+   ]
+  },
+  {
+   "name": "Mercedes-Benz",
+   "mentions": 4,
+   "category": "luxury",
+   "aliases": [
+    "mercedes-benz",
+    "mercedes benz"
+   ]
+  },
+  {
+   "name": "Nescafe",
+   "mentions": 4,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "nescafe"
+   ]
+  },
+  {
+   "name": "Bournvita",
+   "mentions": 4,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "bournvita"
+   ]
+  },
+  {
+   "name": "Protinex",
+   "mentions": 4,
+   "category": "health_nutrition",
+   "aliases": [
+    "protinex"
+   ]
+  },
+  {
+   "name": "Doms",
+   "mentions": 4,
+   "category": "stationery_office",
+   "aliases": [
+    "doms"
+   ]
+  },
+  {
+   "name": "Apsara",
+   "mentions": 4,
+   "category": "stationery_office",
+   "aliases": [
+    "apsara"
+   ]
+  },
+  {
+   "name": "Edifier",
+   "mentions": 3,
+   "category": "electronics",
+   "aliases": [
+    "edifier"
+   ]
+  },
+  {
+   "name": "Keychron",
+   "mentions": 3,
+   "category": "electronics",
+   "aliases": [
+    "keychron"
+   ]
+  },
+  {
+   "name": "Smeg",
+   "mentions": 3,
+   "category": "appliances",
+   "aliases": [
+    "smeg"
+   ]
+  },
+  {
+   "name": "FabIndia",
+   "mentions": 3,
+   "category": "fashion_apparel",
+   "aliases": [
+    "fabindia"
+   ]
+  },
+  {
+   "name": "s.Oliver",
+   "mentions": 3,
+   "category": "fashion_apparel",
+   "aliases": [
+    "s.oliver",
+    "s oliver"
+   ]
+  },
+  {
+   "name": "L'Oréal",
+   "mentions": 3,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "l'oreal",
+    "loreal"
+   ]
+  },
+  {
+   "name": "Wow Skin Science",
+   "mentions": 3,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "wow skin",
+    "wow skin science"
+   ]
+  },
+  {
+   "name": "Versace",
+   "mentions": 3,
+   "category": "luxury",
+   "aliases": [
+    "versace"
+   ]
+  },
+  {
+   "name": "Wheel",
+   "mentions": 3,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "wheel"
+   ]
+  },
+  {
+   "name": "Ujala",
+   "mentions": 3,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "ujala"
+   ]
+  },
+  {
+   "name": "Isopure",
+   "mentions": 3,
+   "category": "health_nutrition",
+   "aliases": [
+    "isopure"
+   ]
+  },
+  {
+   "name": "Nintendo",
+   "mentions": 2,
+   "category": "electronics",
+   "aliases": [
+    "nintendo",
+    "switch"
+   ]
+  },
+  {
+   "name": "Oraimo",
+   "mentions": 2,
+   "category": "electronics",
+   "aliases": [
+    "oraimo"
+   ]
+  },
+  {
+   "name": "Numero Uno",
+   "mentions": 2,
+   "category": "fashion_apparel",
+   "aliases": [
+    "numero uno"
+   ]
+  },
+  {
+   "name": "RPM Fitness",
+   "mentions": 2,
+   "category": "footwear_sports",
+   "aliases": [
+    "rpm fitness"
+   ]
+  },
+  {
+   "name": "D1 Milano",
+   "mentions": 2,
+   "category": "watches_accessories",
+   "aliases": [
+    "d1 milano"
+   ]
+  },
+  {
+   "name": "Inc.5",
+   "mentions": 2,
+   "category": "watches_accessories",
+   "aliases": [
+    "inc 5"
+   ]
+  },
+  {
+   "name": "Tupperware",
+   "mentions": 2,
+   "category": "home_kitchen",
+   "aliases": [
+    "tupperware"
+   ]
+  },
+  {
+   "name": "Emami",
+   "mentions": 2,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "emami"
+   ]
+  },
+  {
+   "name": "PharmEasy",
+   "mentions": 2,
+   "category": "health_nutrition",
+   "aliases": [
+    "pharmeasy"
+   ]
+  },
+  {
+   "name": "Hasbro",
+   "mentions": 2,
+   "category": "toys_baby",
+   "aliases": [
+    "hasbro"
+   ]
+  },
+  {
+   "name": "Whiskas",
+   "mentions": 2,
+   "category": "pets",
+   "aliases": [
+    "whiskas"
+   ]
+  },
+  {
+   "name": "Beats",
+   "mentions": 1,
+   "category": "electronics",
+   "aliases": [
+    "beats"
+   ]
+  },
+  {
+   "name": "BlackBerrys",
+   "mentions": 1,
+   "category": "fashion_apparel",
+   "aliases": [
+    "blackberrys"
+   ]
+  },
+  {
+   "name": "US Polo",
+   "mentions": 1,
+   "category": "fashion_apparel",
+   "aliases": [
+    "us polo",
+    "us pa"
+   ]
+  },
+  {
+   "name": "Seiko",
+   "mentions": 1,
+   "category": "watches_accessories",
+   "aliases": [
+    "seiko"
+   ]
+  },
+  {
+   "name": "Starbucks",
+   "mentions": 1,
+   "category": "home_kitchen",
+   "aliases": [
+    "starbucks"
+   ]
+  },
+  {
+   "name": "Gillette",
+   "mentions": 1,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "gillette"
+   ]
+  },
+  {
+   "name": "Sensodyne",
+   "mentions": 1,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "sensodyne"
+   ]
+  },
+  {
+   "name": "Neutrogena",
+   "mentions": 1,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "neutrogena"
+   ]
+  },
+  {
+   "name": "Sugar Cosmetics",
+   "mentions": 1,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "sugar cosmetics"
+   ]
+  },
+  {
+   "name": "Sebamed",
+   "mentions": 1,
+   "category": "beauty_personal_care",
+   "aliases": [
+    "sebamed"
+   ]
+  },
+  {
+   "name": "Jimmy Choo",
+   "mentions": 1,
+   "category": "luxury",
+   "aliases": [
+    "jimmy choo"
+   ]
+  },
+  {
+   "name": "Ferrari",
+   "mentions": 1,
+   "category": "luxury",
+   "aliases": [
+    "ferrari",
+    "scuderia ferrari"
+   ]
+  },
+  {
+   "name": "David Beckham",
+   "mentions": 1,
+   "category": "luxury",
+   "aliases": [
+    "david beckham"
+   ]
+  },
+  {
+   "name": "Cristiano Ronaldo",
+   "mentions": 1,
+   "category": "luxury",
+   "aliases": [
+    "cristiano ronaldo",
+    "cr7"
+   ]
+  },
+  {
+   "name": "Taj Mahal Tea",
+   "mentions": 1,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "taj mahal tea"
+   ]
+  },
+  {
+   "name": "Bru",
+   "mentions": 1,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "bru coffee",
+    "bru instant"
+   ]
+  },
+  {
+   "name": "Horlicks",
+   "mentions": 1,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "horlicks"
+   ]
+  },
+  {
+   "name": "Complan",
+   "mentions": 1,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "complan"
+   ]
+  },
+  {
+   "name": "MDH",
+   "mentions": 1,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "mdh"
+   ]
+  },
+  {
+   "name": "Mother Dairy",
+   "mentions": 1,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "mother dairy"
+   ]
+  },
+  {
+   "name": "Milky Mist",
+   "mentions": 1,
+   "category": "fmcg_grocery",
+   "aliases": [
+    "milky mist"
+   ]
+  },
+  {
+   "name": "Zandu",
+   "mentions": 1,
+   "category": "health_nutrition",
+   "aliases": [
+    "zandu"
+   ]
+  },
+  {
+   "name": "Camlin",
+   "mentions": 1,
+   "category": "stationery_office",
+   "aliases": [
+    "camlin"
+   ]
+  },
+  {
+   "name": "Nerf",
+   "mentions": 1,
+   "category": "toys_baby",
+   "aliases": [
+    "nerf"
+   ]
+  },
+  {
+   "name": "Purepet",
+   "mentions": 1,
+   "category": "pets",
+   "aliases": [
+    "purepet"
+   ]
+  }
+ ]
+}

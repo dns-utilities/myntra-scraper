@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import threading
 import time
@@ -9,6 +10,7 @@ from collections import deque
 
 import requests
 
+from myntra_scraper.deal_buttons import deal_keyboard
 from myntra_scraper.models import DiscountTier, Product
 
 log = logging.getLogger("myntra_scraper.notifier")
@@ -47,33 +49,53 @@ class DealNotifier:
         return self._affiliate
 
     def route(self, discount: int) -> list[int]:
+        """Tier bands are non-overlapping: 70-79 / 80-89 / 90+, plus the all feed.
+
+        Keeping them disjoint means a deal is posted once per channel family —
+        no 85% deal appearing in both D70 and D80. Result is de-duplicated
+        because unset tiers fall back to CHANNEL_ALL, and posting the same
+        deal twice to one channel is worse than missing a tier.
+        """
         if discount >= DiscountTier.JACKPOT:
             names = ("all", "90plus")
+        elif discount >= DiscountTier.DEEP:
+            names = ("all", "80plus")
         elif discount >= DiscountTier.HOT:
             names = ("all", "70plus")
         else:
             names = ("all",)
-        return [self._channels[n] for n in names if n in self._channels]
+        out: list[int] = []
+        for name in names:
+            chat = self._channels.get(name)
+            if chat and chat not in out:
+                out.append(chat)
+        return out
 
     def queue(self, product: Product) -> None:
         text = product.format_message(self._affiliate)
+        keyboard = deal_keyboard(product.product_id, product.price, product.source)
         with self._queue_lock:
             for chat_id in self.route(product.discount):
                 self._queue.append({"text": text, "chat_id": chat_id,
-                                    "discount": product.discount})
+                                    "discount": product.discount,
+                                    "keyboard": keyboard})
     @property
     def pending(self) -> int:
         with self._queue_lock:
             return len(self._queue)
 
-    def _send(self, token: str, chat_id: int, text: str) -> str:
+    def _send(self, token: str, chat_id: int, text: str,
+              keyboard: dict | None = None) -> str:
         now = time.time()
         if now - self._last_bot[token] < 1 / 25 or now - self._last_global < 1 / 67:
             return "rate_limit:0"
         try:
+            payload = {"chat_id": chat_id, "text": text}
+            if keyboard:
+                payload["reply_markup"] = json.dumps(keyboard)
             resp = requests.post(
                 "https://api.telegram.org/bot%s/sendMessage" % token,
-                data={"chat_id": chat_id, "text": text}, timeout=8)
+                data=payload, timeout=8)
             now = time.time()
             self._last_bot[token] = now
             self._last_global = now
@@ -101,7 +123,8 @@ class DealNotifier:
                     self._queue.append(msg)
                 time.sleep(0.1)
                 continue
-            result = self._send(token, msg["chat_id"], msg["text"])
+            result = self._send(token, msg["chat_id"], msg["text"],
+                                msg.get("keyboard"))
             if result == "ok":
                 with self._stats_lock:
                     self.sent += 1

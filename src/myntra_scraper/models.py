@@ -11,12 +11,15 @@ from urllib.parse import urlencode
 class DiscountTier(IntEnum):
     STANDARD = 0
     HOT = 70
+    DEEP = 80
     JACKPOT = 90
 
     @classmethod
     def for_discount(cls, discount: int) -> "DiscountTier":
         if discount >= cls.JACKPOT:
             return cls.JACKPOT
+        if discount >= cls.DEEP:
+            return cls.DEEP
         if discount >= cls.HOT:
             return cls.HOT
         return cls.STANDARD
@@ -31,6 +34,11 @@ def deal_badge(discount: int) -> str:
     if discount >= 80:
         return "🚨"
     return ""
+
+
+# Human label per source. Deal messages carry this as a trailing "App:" line
+# instead of emoji branding at the top of the message.
+SOURCE_LABELS = {"myntra": "Myntra", "croma": "Croma"}
 
 
 def clean_product_url(url_or_id: str) -> str:
@@ -80,10 +88,18 @@ class Product:
     rating: float = 0.0
     source: str = "myntra"          # "myntra" | "croma" — drives link building + labels
     store_codes: tuple = ()          # Croma only: SA-XXXX codes for STOCK#
+    # Delivery scope the price was observed at. Empty for sources with a single
+    # national price; a pincode/store id for location-scoped sources (q-commerce
+    # prices per dark store, so the same SKU is a different "product" per place).
+    location: str = ""
 
     @property
     def tier(self) -> DiscountTier:
         return DiscountTier.for_discount(self.discount)
+
+    @property
+    def app_label(self) -> str:
+        return SOURCE_LABELS.get(self.source, self.source.replace("_", " ").title())
 
     @staticmethod
     def calculate_discount(price: int, mrp: int) -> int:
@@ -133,17 +149,20 @@ class Product:
     def format_message(self, affiliate_params: dict | str | None = None) -> str:
         tag = affiliate_params if isinstance(affiliate_params, str) else ""
         badge = deal_badge(self.discount)
-        source_tag = "🏬 Croma" if self.source == "croma" else "🛍️ Myntra"
-        head = "%s %s | %d%% Off - %s %s" % (
-            badge, source_tag, self.discount, self.brand, self.title)
+        head = "%s %d%% Off - %s %s" % (
+            badge, self.discount, self.brand, self.title)
         # Croma deals link straight to the product URL (no affiliate tag scheme).
         link = self.url if self.source == "croma" and self.url else build_deal_link(self.product_id, tag)
+        # Source identity lives at the bottom, never in the headline.
+        app = self.app_label + (" (%s)" % self.location if self.location else "")
         return "\n".join([
             head.strip(),
             "",
             "💰 Price: ₹%d (MRP: ₹%d)" % (self.price, self.mrp),
             "",
             link,
+            "",
+            "App: %s" % app,
         ])
 
     @classmethod

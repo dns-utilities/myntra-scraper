@@ -18,20 +18,25 @@ log = logging.getLogger("myntra_scraper.scraper")
 
 class MyntraScraper:
     def __init__(self, token_manager: TokenManager, impersonate: str,
-                 pincode: str, concurrency: int, max_pages: int) -> None:
+                 pincode: str, concurrency: int, max_pages: int,
+                 rate_limiter=None) -> None:
         self._tokens = token_manager
         self._impersonate = impersonate
         self._pincode = pincode
         self._concurrency = concurrency
         self._max_pages = max_pages
+        # Per-source politeness budget. Concurrency alone still lets a batch
+        # burst the host; the bucket spaces requests out.
+        self._limiter = rate_limiter
         self._lock = threading.Lock()
         self.requests = 0
         self.successes = 0
         self.errors = 0
         self.forbidden = 0
         self.rate_limited = 0
-        log.info("Scraper ready | pincode=%s concurrency=%d pages=%d impersonate=%s",
-                 pincode, concurrency, max_pages, token_manager.impersonate)
+        log.info("Scraper ready | pincode=%s concurrency=%d pages=%d impersonate=%s rps=%s",
+                 pincode, concurrency, max_pages, token_manager.impersonate,
+                 getattr(rate_limiter, "_rate", "unbounded"))
 
     def _headers(self, token: str, referer: str) -> dict:
         # MUST match the token session: same device, same sessionID,
@@ -75,6 +80,8 @@ class MyntraScraper:
                     break
                 api_url, params = build_api_request(info, page)
                 try:
+                    if self._limiter is not None:
+                        await self._limiter.acquire()
                     resp = await session.get(api_url, params=params,
                                              headers=self._headers(token, url), timeout=20)
                     with self._lock:

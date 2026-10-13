@@ -22,19 +22,22 @@ log = logging.getLogger("myntra_scraper.croma")
 
 class CromaScraper:
     def __init__(self, impersonate: str, concurrency: int, max_pages: int,
-                 channel_code: str = "400049") -> None:
+                 channel_code: str = "400049", rate_limiter=None) -> None:
         self._impersonate = impersonate
         self._concurrency = concurrency
         self._max_pages = max_pages
         self._channel_code = channel_code
+        # Per-source politeness budget — see sources.AsyncRateLimiter.
+        self._limiter = rate_limiter
         self.requests = 0
         self.successes = 0
         self.errors = 0
         self.forbidden = 0
         self.rate_limited = 0
         self._lock = asyncio.Lock()
-        log.info("Croma scraper ready | concurrency=%d pages=%d impersonate=%s",
-                 concurrency, max_pages, impersonate)
+        log.info("Croma scraper ready | concurrency=%d pages=%d impersonate=%s rps=%s",
+                 concurrency, max_pages, impersonate,
+                 getattr(rate_limiter, "_rate", "unbounded"))
 
     async def scrape_all(self, urls: list[str]) -> list[Product]:
         found: list[Product] = []
@@ -50,6 +53,8 @@ class CromaScraper:
             while page < self._max_pages:
                 api_url = build_api_url(info, page, self._channel_code)
                 try:
+                    if self._limiter is not None:
+                        await self._limiter.acquire()
                     resp = await session.get(api_url, headers=api_headers(info["referer"]),
                                              impersonate=self._impersonate, timeout=20)
                 except Exception as exc:
