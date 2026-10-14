@@ -30,6 +30,11 @@ class DealNotifier:
         self._last_global = 0.0
         self._running = False
         self._workers: list[threading.Thread] = []
+        # (bot, chat) pairings that cannot work, so round-robin stops feeding
+        # them. Self-healing: a bot promoted to admin later stays excluded
+        # until restart, which is exactly what /verify_bots surfaces.
+        self._bot_chat_blocked: set[tuple[str, int]] = set()
+        self._bot_chat_fails: dict[tuple[str, int], int] = {}
         self.sent = 0
         self.failed = 0
         self.by_channel = {name: 0 for name in channels}
@@ -48,22 +53,28 @@ class DealNotifier:
     def affiliate_tag(self) -> str:
         return self._affiliate
 
-    def route(self, discount: int) -> list[int]:
-        """Tier bands are non-overlapping: 70-79 / 80-89 / 90+, plus the all feed.
+    def route(self, discount: int, source: str = "") -> list[int]:
+        """Pick exactly ONE channel family per deal.
 
-        Keeping them disjoint means a deal is posted once per channel family —
-        no 85% deal appearing in both D70 and D80. Result is de-duplicated
-        because unset tiers fall back to CHANNEL_ALL, and posting the same
-        deal twice to one channel is worse than missing a tier.
+        * `< 70%`   -> that source's base channel (CHANNEL_MYNTRA /
+          CHANNEL_CROMA), falling back to CHANNEL_ALL
+        * `70-79%`  -> CHANNEL_70PLUS only
+        * `80-89%`  -> CHANNEL_80PLUS only
+        * `90%+`    -> CHANNEL_90PLUS only
+
+        Tier deals never also land in the base channel — a 85% deal appearing
+        in both D80 and Myntra-base is what makes a base feed feel spammy.
+        Result is de-duplicated because unset tiers fall back to other ids.
         """
         if discount >= DiscountTier.JACKPOT:
-            names = ("all", "90plus")
+            names = ("90plus",)
         elif discount >= DiscountTier.DEEP:
-            names = ("all", "80plus")
+            names = ("80plus",)
         elif discount >= DiscountTier.HOT:
-            names = ("all", "70plus")
+            names = ("70plus",)
         else:
-            names = ("all",)
+            base = source if source in self._channels and self._channels.get(source) else "all"
+            names = (base,)
         out: list[int] = []
         for name in names:
             chat = self._channels.get(name)
@@ -74,10 +85,12 @@ class DealNotifier:
     def queue(self, product: Product) -> None:
         text = product.format_message(self._affiliate)
         keyboard = deal_keyboard(product.product_id, product.price, product.source)
+        targets = self.route(product.discount, product.source)
         with self._queue_lock:
-            for chat_id in self.route(product.discount):
+            for chat_id in targets:
                 self._queue.append({"text": text, "chat_id": chat_id,
                                     "discount": product.discount,
+                                    "source": product.source,
                                     "keyboard": keyboard})
     @property
     def pending(self) -> int:
@@ -104,6 +117,13 @@ class DealNotifier:
             if resp.status_code == 429:
                 wait = resp.json().get("parameters", {}).get("retry_after", 5)
                 return "rate_limit:%d" % wait
+            # 403 "bot is not a member of the channel chat" / 400 "chat not
+            # found" are permanent for this bot — retrying cannot fix them.
+            if resp.status_code in (400, 403):
+                body = (resp.text or "")[:120]
+                log.error("Send BLOCKED HTTP %d to %s: %s", resp.status_code,
+                          chat_id, body)
+                return "no_access:%d" % resp.status_code
             log.error("Send failed HTTP %d to %s: %s", resp.status_code,
                       chat_id, (resp.text or "")[:200])
             return "error"
@@ -123,23 +143,72 @@ class DealNotifier:
                     self._queue.append(msg)
                 time.sleep(0.1)
                 continue
-            result = self._send(token, msg["chat_id"], msg["text"],
-                                msg.get("keyboard"))
+            chat_id = msg["chat_id"]
+            # A bot that cannot post to a chat (not an admin, kicked, wrong
+            # id) would otherwise keep failing on that chat forever and the
+            # deal would be lost. Skip it here so another worker gets it.
+            if (token, chat_id) in self._bot_chat_blocked:
+                if not self._any_worker_for(chat_id, except_token=token):
+                    # Nobody can serve this chat — dropping beats spinning.
+                    log.error("Notifier: no bot can post to chat %s — message "
+                              "dropped (is any bot an admin there?)", chat_id)
+                    with self._stats_lock:
+                        self.failed += 1
+                else:
+                    with self._queue_lock:
+                        self._queue.append(msg)
+                time.sleep(0.05)
+                continue
+            result = self._send(token, chat_id, msg["text"], msg.get("keyboard"))
             if result == "ok":
                 with self._stats_lock:
                     self.sent += 1
+                    self._bot_chat_fails.pop((token, chat_id), None)
                     for name, cid in self._channels.items():
-                        if cid == msg["chat_id"]:
+                        if cid == chat_id:
                             self.by_channel[name] += 1
             elif result.startswith("rate_limit:"):
-                wait = int(result.split(":")[1])
-                msg["_retry_after"] = time.time() + max(wait, 1)
+                wait = float(result.split(":")[1])
+                delay = wait if wait > 0 else 0.05
+                msg["_retry_after"] = time.time() + delay
                 with self._queue_lock:
                     self._queue.append(msg)
-                time.sleep(min(max(wait, 1), 10))
+                # A Telegram 429 is a real instruction and is honoured. Our own
+                # local pacing only needs the short gap to elapse, so it must
+                # not pay the same 1s penalty — that penalty is what makes a
+                # multi-bot pool look lopsided under load.
+                time.sleep(delay)
+            elif result.startswith("no_access:"):
+                # Permanent for this pairing — never retry with this bot.
+                self._mark_blocked(token, chat_id, result)
+                with self._stats_lock:
+                    self.failed += 1
             else:
                 with self._stats_lock:
                     self.failed += 1
+                fails = self._bot_chat_fails.get((token, chat_id), 0) + 1
+                self._bot_chat_fails[(token, chat_id)] = fails
+                if fails >= 3:
+                    self._mark_blocked(token, chat_id,
+                                       "%d consecutive failures" % fails)
+
+    def _any_worker_for(self, chat_id: int, except_token: str) -> bool:
+        """True when some other bot could still serve this chat."""
+        with self._stats_lock:
+            for tok in self._tokens:
+                if tok != except_token and (tok, chat_id) not in self._bot_chat_blocked:
+                    return True
+        return False
+
+    def _mark_blocked(self, token: str, chat_id: int, reason: str) -> None:
+        """Retire a (bot, chat) pairing so other workers pick up its messages."""
+        if (token, chat_id) in self._bot_chat_blocked:
+            return
+        self._bot_chat_blocked.add((token, chat_id))
+        self._bot_chat_fails.pop((token, chat_id), None)
+        log.warning("Notifier: bot ...%s cannot post to chat %s (%s) — excluding "
+                    "that pairing; another bot will handle it",
+                    token[-6:], chat_id, reason)
 
     def start(self) -> None:
         if self._running or not self._tokens:
@@ -161,4 +230,17 @@ class DealNotifier:
     def stats(self) -> dict:
         with self._stats_lock:
             return {"sent": self.sent, "failed": self.failed,
-                    "pending": self.pending, "by_channel": dict(self.by_channel)}
+                    "pending": self.pending, "by_channel": dict(self.by_channel),
+                    "blocked_pairings": len(self._bot_chat_blocked)}
+
+    def blocked_pairings(self) -> list[tuple[str, int]]:
+        with self._stats_lock:
+            return sorted(self._bot_chat_blocked)
+
+    def reset_blocked(self) -> int:
+        """Clear retired (bot, chat) pairings — use after promoting bots."""
+        with self._stats_lock:
+            count = len(self._bot_chat_blocked)
+            self._bot_chat_blocked.clear()
+            self._bot_chat_fails.clear()
+        return count

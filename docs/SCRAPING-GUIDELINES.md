@@ -152,6 +152,50 @@ difference between a 5-minute fix and a lost week.
 * Every per-site behaviour is env-overridable, so a site that starts 429-ing
   can be slowed down without a redeploy.
 
+## 11. Adding more bots
+
+`BOT_TOKENS` takes several tokens. Token #1 is the control bot; the rest are
+extra senders, and the notifier round-robins deal posts across all of them so
+one bot's rate limit is not the ceiling.
+
+Two facts make this less painful than it looks:
+
+**You probably need fewer bots than you think.** Telegram allows roughly 30
+messages/second per bot. With 5 channels and a trickle of deals per cycle, one
+bot is nowhere near the ceiling. Extra bots buy resilience (a banned or
+rate-limited bot does not stop the feed), not throughput — so 2–3 is usually
+the sweet spot, not 10.
+
+**Adding them is manual and quick.** Telegram does not allow a bot to add
+another bot to a group, so nobody can script this part. In Telegram Desktop,
+per bot per channel: open the channel → Administrators → Add Admin → search the
+bot's @username → grant *Post Messages*. About 10 seconds each, so 10 bots × 5
+groups is roughly 10 minutes of clicking.
+
+What you do *not* have to do is guess whether it worked:
+
+```powershell
+python scripts/verify_bots.py     # from your machine, reads .env
+```
+
+…or `/verify_bots` in the control bot. Both probe every (bot, channel) pairing
+with `getChatMember` and print a matrix, so a missing admin shows up as a named
+cell instead of a mysteriously absent message.
+
+Two behaviours to know about:
+
+* Each bot gets its own long-poll thread, because a button callback is
+  delivered to whichever bot posted the message, and because Telegram's
+  `update_id` sequence is **per bot** — a shared cursor would make every bot
+  but the busiest silently drop its own commands.
+* If a (bot, chat) pairing fails with 403/400, the notifier retires that
+  pairing and another bot takes the message, so one un-promoted bot cannot
+  black-hole a channel. `/status` reports `blocked-pairings`, and
+  `/reset_bots` clears them after you fix the permissions.
+
+Local pacing also does not punish a multi-bot pool: a self-imposed pacing miss
+costs ~50 ms, not the full second a real Telegram 429 deserves.
+
 ## 10. Config reference (new)
 
 ```bash

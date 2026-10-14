@@ -50,6 +50,8 @@ HELP_TEXT = (
     "/autoclear — auto-clear config + eligible brand count\n"
     "/autoclear_add <brand> — let a brand re-post on the cooldown\n"
     "/autoclear_remove <brand> — stop re-posting it\n"
+    "/verify_bots — test every bot against every channel (matrix)\n"
+    "/reset_bots — clear retired bot/chat pairings after promoting bots\n"
     "/prune — force the seen-DB retention sweep\n"
     "/help — this message\n"
     "\n"
@@ -67,8 +69,12 @@ class ControllerBot:
         self._app = app
         self._running = False
         self._threads: list[threading.Thread] = []
-        self._offset = 0
-        self._seen: set[int] = set()
+        # Telegram's update_id sequence is PER BOT, not shared. Sharing one
+        # offset across pollers makes every bot but the busiest one skip its
+        # own updates silently — the classic "commands do nothing" bug. Keyed
+        # by token, filled in start().
+        self._offsets: dict[str, int] = {}
+        self._seen: dict[str, set[int]] = {}
 
     # -- low-level API -----------------------------------------------------
     def _api(self, method: str, token: str | None = None, **params) -> dict:
@@ -113,6 +119,12 @@ class ControllerBot:
             return self._diag(cmd)
         if low.startswith("/run"):
             return "Run queued — one pass over every source."
+        if low.startswith("/verify_bots") or low.startswith("/verify"):
+            return self._verify_bots()
+        if low.startswith("/reset_bots"):
+            count = app.notifier.reset_blocked()
+            return ("Cleared %d retired bot/chat pairing(s). Re-verified on the "
+                    "next send." % count)
         if low.startswith("/help"):
             return HELP_TEXT
         if low.startswith("/list_links") or cmd.strip() == "LIST#":
@@ -346,6 +358,52 @@ class ControllerBot:
             return "'%s' is not in the auto-clear list." % brand
         return "Usage: /autoclear [list|add <brand>|remove <brand>]"
 
+    def _verify_bots(self) -> str:
+        """Probe every (bot, channel) pairing.
+
+        Telegram will not let a bot add another bot to a group, so the only
+        way to confirm "is bot 4 an admin in the 90plus group?" is to ask each
+        bot about it. This does exactly that and reports a matrix, so the
+        manual part of onboarding bots becomes verifiable instead of hopeful.
+        """
+        app = self._app
+        tokens = [t for t in app.settings.bot_tokens if t]
+        if not tokens:
+            return "No BOT_TOKENS configured."
+        chats: list[tuple[str, int]] = []
+        for name, cid in app.settings.channels.items():
+            if cid and cid not in [c for _, c in chats]:
+                chats.append((name, cid))
+        if not chats:
+            return "No channels configured."
+        lines = ["Bot / channel matrix (%d bots x %d channels):"
+                 % (len(tokens), len(chats))]
+        bad = 0
+        for idx, tok in enumerate(tokens, 1):
+            me = self._api("getMe", token=tok)
+            bot_id = str((me.get("result") or {}).get("id", "")) if me.get("ok") else ""
+            marks = []
+            for name, cid in chats:
+                if bot_id:
+                    member = self._api("getChatMember", token=tok,
+                                       chat_id=cid, user_id=int(bot_id))
+                    status = (member.get("result") or {}).get("status") or ""
+                    ok = status in ("administrator", "creator")
+                else:
+                    ok, status = False, "no-getMe"
+                if not ok:
+                    bad += 1
+                marks.append("%s=%s" % (name, "OK" if ok else (status or "FAIL")))
+            lines.append("bot %d (...%s): %s" % (idx, tok[-6:], "  ".join(marks)))
+        lines.append("")
+        if bad:
+            lines.append("%d pairing(s) FAILED — add those bots as admins to "
+                         "those channels, then /verify_bots again." % bad)
+            lines.append("Retired pairings clear with /reset_bots.")
+        else:
+            lines.append("All pairings OK — every bot can post to every channel.")
+        return "\n".join(lines)
+
     # -- long poll ---------------------------------------------------------
     def _loop(self, token: str, primary: bool) -> None:
         label = "control" if primary else token[-6:]
@@ -359,7 +417,8 @@ class ControllerBot:
                     time.sleep(30)
                     errors = 0
                     continue
-                data = self._api("getUpdates", token=token, offset=self._offset + 1,
+                data = self._api("getUpdates", token=token,
+                                 offset=self._offsets.get(token, 0) + 1,
                                  timeout=30,
                                  allowed_updates=["message", "channel_post", "callback_query"])
                 # getUpdates conflict (409) = same bot token polling elsewhere.
@@ -372,20 +431,32 @@ class ControllerBot:
                     continue
                 errors = 0
                 for update in data.get("result", []):
-                    uid = update.get("update_id", 0)
-                    if uid in self._seen:
-                        continue
-                    self._seen.add(uid)
-                    self._offset = max(self._offset, uid)
-                    if len(self._seen) > 2000:
-                        self._seen = {uid}
-                    self._dispatch(update, token, deal_chats)
+                    self._process_update(update, token, deal_chats)
                 time.sleep(0.5)
             except Exception as exc:
                 errors += 1
                 log.error("Poller [%s] loop error: %s", label, exc)
                 time.sleep(3)
         log.info("Poller [%s] stopped", label)
+
+    def _process_update(self, update: dict, token: str, deal_chats: set[int]) -> None:
+        """De-duplicate and advance THIS bot's cursor, then dispatch.
+
+        Telegram's update_id sequence is per bot, so the cursor and the seen-set
+        are keyed by token. Sharing them across poller threads is what makes
+        commands to all but the busiest bot silently disappear: one bot's high
+        update ids advance the shared cursor past every other bot's pending
+        updates, and Telegram then never returns them.
+        """
+        uid = update.get("update_id", 0)
+        seen = self._seen.setdefault(token, set())
+        if uid in seen:
+            return
+        seen.add(uid)
+        if len(seen) > 2000:
+            self._seen[token] = {uid}
+        self._offsets[token] = max(self._offsets.get(token, 0), uid)
+        self._dispatch(update, token, deal_chats)
 
     def _dispatch(self, update: dict, token: str, deal_chats: set[int]) -> None:
         if "callback_query" in update:
@@ -434,12 +505,16 @@ class ControllerBot:
         for tok in self._tokens:
             if tok and tok not in unique:
                 unique.append(tok)
+        for tok in unique:
+            self._offsets[tok] = 0
+            self._seen[tok] = set()
         for idx, tok in enumerate(unique):
             thread = threading.Thread(target=self._loop, args=(tok, idx == 0),
                                       daemon=True, name="tg-poller-%d" % idx)
             thread.start()
             self._threads.append(thread)
-        log.info("Controller started: %d poller thread(s)", len(self._threads))
+        log.info("Controller started: %d poller thread(s) (one per bot token, "
+                 "each with its own update offset)", len(self._threads))
 
     def stop(self) -> None:
         self._running = False

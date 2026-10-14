@@ -63,6 +63,8 @@ class Settings:
     control_bot_token: str = ""
     admin_chat_id: int = 0
     channel_all: int = 0
+    channel_myntra: int = 0
+    channel_croma: int = 0
     channel_70plus: int = 0
     channel_80plus: int = 0
     channel_90plus: int = 0
@@ -114,6 +116,8 @@ class Settings:
         tokens = _parse_tokens(os.environ.get("BOT_TOKENS", ""))
         admin = _env_int("ADMIN_CHAT_ID", 0)
         channel_all = _env_int("CHANNEL_ALL", 0)
+        channel_myntra = _env_int("CHANNEL_MYNTRA", channel_all)
+        channel_croma = _env_int("CHANNEL_CROMA", channel_all)
         channel_70 = _env_int("CHANNEL_70PLUS", channel_all)
         channel_80 = _env_int("CHANNEL_80PLUS", channel_all)
         channel_90 = _env_int("CHANNEL_90PLUS", channel_all)
@@ -124,6 +128,8 @@ class Settings:
             control_bot_token=tokens[0] if tokens else "",
             admin_chat_id=admin,
             channel_all=channel_all,
+            channel_myntra=channel_myntra,
+            channel_croma=channel_croma,
             channel_70plus=channel_70,
             channel_80plus=channel_80,
             channel_90plus=channel_90,
@@ -213,8 +219,11 @@ class Settings:
 
     @property
     def channels(self) -> dict[str, int]:
+        """Every configured feed. Keys are source names and discount tiers."""
         return {
             "all": self.channel_all,
+            "myntra": self.channel_myntra,
+            "croma": self.channel_croma,
             "70plus": self.channel_70plus,
             "80plus": self.channel_80plus,
             "90plus": self.channel_90plus,

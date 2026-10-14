@@ -81,6 +81,8 @@ Sent to the **control bot** (token #1) in the admin chat:
 | `/autoclear` | auto-clear config + eligible brand count |
 | `/autoclear_list` | show auto-clear brands |
 | `/autoclear_add <brand>` / `/autoclear_remove <brand>` | edit the list (persists) |
+| `/verify_bots` | probe every bot × every channel, print a pass/fail matrix |
+| `/reset_bots` | clear retired (bot, chat) pairings after promoting a bot |
 | `/prune` | force the seen-DB retention sweep |
 | `/affiliate` / `/set_affiliate` / `/clear_affiliate` | link tag |
 | `/help` | command list |
@@ -110,16 +112,47 @@ location-scoped sources). No source branding in the headline.
 
 ## Tier channels
 
-Bands are **non-overlapping**, so a deal posts once per channel family:
+Every deal posts to **exactly one** channel family. Tier deals never also land
+in a base channel — an 85% deal appearing in both D80 and Myntra-base is what
+makes a base feed feel spammy.
 
-| Discount | Channels |
+| Discount | Channel |
 |---|---|
-| `< 70%` | `all` |
-| 70–79% | `all`, `70plus` |
-| 80–89% | `all`, `80plus` |
-| 90%+ | `all`, `90plus` |
+| `< 70%` | `CHANNEL_MYNTRA` or `CHANNEL_CROMA` (per source; falls back to `CHANNEL_ALL`) |
+| 70–79% | `CHANNEL_70PLUS` (shared by all sources) |
+| 80–89% | `CHANNEL_80PLUS` (shared by all sources) |
+| 90%+ | `CHANNEL_90PLUS` (shared by all sources) |
+
+So a base channel carries everything *below* 70% for that one source, and the
+tier channels stay combined across all sources. `/status` prints the live
+routing map.
 
 Badges in the headline: 95+ 💎✨ · 90+ 🔥 · 80+ 🚨.
+
+## Multiple bots
+
+`BOT_TOKENS` takes several comma/newline-separated tokens. Token #1 is the
+control bot; the rest are extra senders, and the notifier round-robins deal
+posts across all of them so one bot's rate limit is not the ceiling.
+
+Each bot gets **its own long-poll thread**, for two reasons:
+
+1. A button callback is delivered to whichever bot *posted* the message, so
+   every token must be listening or those buttons do nothing.
+2. Telegram's `update_id` sequence is **per bot**. Sharing one cursor across
+   poller threads makes every bot but the busiest silently skip its own
+   updates — commands sent to those bots just never arrive. (This was a real
+   bug; see `scripts/poller_test.py`.)
+
+Every bot must be an **admin with post permission in every channel** it may
+post to. Telegram does not let a bot add another bot to a group, so that part
+is manual — but `/verify_bots` probes every (bot, channel) pairing and prints a
+matrix, so the manual work is verifiable instead of hopeful. `/reset_bots`
+clears retired pairings after you promote a bot.
+
+The notifier also self-heals: if a (bot, chat) pairing starts failing with
+403/400, that pairing is retired and another bot takes over the message, and
+`/status` shows `blocked-pairings`.
 
 ## Auto-clear
 
@@ -175,9 +208,11 @@ survive a genuine price drop into range.
 | `BOT_TOKENS` | **yes** | — | comma/newline-separated bot tokens, token #1 = control bot |
 | `ADMIN_CHAT_ID` | **yes** | — | your Telegram user/chat id — only this id may control |
 | `CHANNEL_ALL` | **yes** | — | deal channel id (all deals) |
-| `CHANNEL_70PLUS` | no | same as ALL | 70–79% deals |
-| `CHANNEL_80PLUS` | no | same as ALL | 80–89% deals |
-| `CHANNEL_90PLUS` | no | same as ALL | 90%+ deals |
+| `CHANNEL_70PLUS` | no | same as ALL | 70–79% deals (shared by all sources) |
+| `CHANNEL_80PLUS` | no | same as ALL | 80–89% deals (shared by all sources) |
+| `CHANNEL_90PLUS` | no | same as ALL | 90%+ deals (shared by all sources) |
+| `CHANNEL_MYNTRA` | no | same as ALL | Myntra base feed (below 70%) |
+| `CHANNEL_CROMA` | no | same as ALL | Croma base feed (below 70%) |
 | `AUTO_CLEAR_ENABLED` | no | `true` | re-post eligible deals on a cooldown |
 | `AUTO_CLEAR_HOURS` | no | `24` | cooldown before an eligible deal may re-post |
 | `AUTO_CLEAR_MAX_PER_HOUR` | no | `25` | hard cap on auto-clear re-posts per hour |

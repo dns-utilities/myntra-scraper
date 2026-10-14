@@ -344,6 +344,7 @@ class ScraperApp:
         lines = [
             "Scraper %s | uptime %s" % ("RUNNING" if self.scraping_enabled else "PAUSED", uptime),
             "ticks: %d" % self.cycle_count,
+            self.routing_text(),
         ]
         for source in self.sources:
             seen = source.seen().stats()
@@ -362,7 +363,9 @@ class ScraperApp:
             if st.get("last_error"):
                 lines.append("  last error: %s" % st["last_error"])
         lines += [
-            "queue: sent=%d failed=%d pending=%d" % (tg["sent"], tg["failed"], tg["pending"]),
+            "queue: sent=%d failed=%d pending=%d blocked-pairings=%d" % (
+                tg["sent"], tg["failed"], tg["pending"],
+                tg.get("blocked_pairings", 0)),
             budget_line,
             "blacklist: %d brand rules | %d product blocks" % (
                 len(self.blacklist.all()), len(self.blacklist.product_blocks())),
@@ -370,6 +373,22 @@ class ScraperApp:
                                else "ON (%s…)" % self.affiliate_tag[:40]),
         ]
         return "\n".join(lines)
+
+    def routing_text(self) -> str:
+        """One line describing where each discount band posts."""
+        ch = self.settings.channels
+        base_all = ch.get("all")
+
+        def label(name: str) -> str:
+            cid = ch.get(name)
+            if not cid:
+                return "-"
+            return "%s(%s)" % (name, "=ALL" if cid == base_all else cid)
+
+        per_source = bool(ch.get("myntra") or ch.get("croma"))
+        base = "myntra/croma base" if per_source else "ALL"
+        return ("routes: <70%%->%s | %s | %s | %s  [base per-source, tiers exclusive]"
+                % (base, label("70plus"), label("80plus"), label("90plus")))
 
     async def shutdown(self) -> None:
         log.info("Shutting down - draining queue...")

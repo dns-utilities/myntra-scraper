@@ -8,6 +8,8 @@ from __future__ import annotations
 import json
 import sys
 import tempfile
+import threading as _threading
+from collections import deque
 from pathlib import Path
 
 # Windows consoles default to cp1252, which cannot encode the deal emoji.
@@ -43,27 +45,50 @@ check("tier 80", DiscountTier.for_discount(80).name, "DEEP")
 check("tier 89", DiscountTier.for_discount(89).name, "DEEP")
 check("tier 90", DiscountTier.for_discount(90).name, "JACKPOT")
 
-channels = {"all": -100, "70plus": -170, "80plus": -180, "90plus": -190}
+channels = {"all": -100, "myntra": -200, "croma": -300,
+            "70plus": -170, "80plus": -180, "90plus": -190}
 
 
 class FakeNotifier(DealNotifier):
     def __init__(self):  # bypass worker threads
         self._channels = channels
         self._affiliate = ""
+        self._tokens = ["t1"]
+        self._last_bot = {}
+        self._last_global = 0.0
+        self._queue = deque()  # type: ignore[var-annotated]
+        self._bot_chat_blocked = set()
+        self._bot_chat_fails = {}
+        import threading as _t
+        self._stats_lock = _threading.Lock()
 
 
 n = FakeNotifier()
-check("route 65", n.route(65), [-100])
-check("route 75", n.route(75), [-100, -170])
-check("route 85", n.route(85), [-100, -180])
-check("route 95", n.route(95), [-100, -190])
+check("route 65 myntra", n.route(65, "myntra"), [-200])       # base, per source
+check("route 65 croma", n.route(65, "croma"), [-300])
+check("route 65 unknown source", n.route(65, "blinkit"), [-100])  # falls back to ALL
+check("route 75", n.route(75, "myntra"), [-170])               # tier only
+check("route 85", n.route(85, "myntra"), [-180])
+check("route 95", n.route(95, "croma"), [-190])
 
-# unset tiers fall back to CHANNEL_ALL — must not double-post
-fallback = {"all": -100, "70plus": -100, "80plus": -100, "90plus": -100}
+# the whole point: a tier deal must never also hit a base channel
+for d in range(0, 101):
+    got = n.route(d, "myntra")
+    if d >= 70:
+        check_ok = (got == [-170] or got == [-180] or got == [-190]) and -200 not in got
+    else:
+        check_ok = got == [-200]
+    if not check_ok:
+        FAILS.append("route(%d, myntra) leaked base or wrong tier: %r" % (d, got))
+check("no tier/base leakage 0-100", [f for f in FAILS if "leaked" in f], [])
+
+# unset tiers falling back must not double-post
+fallback = {"all": -100, "myntra": -100, "croma": -100,
+            "70plus": -100, "80plus": -100, "90plus": -100}
 m = FakeNotifier()
 m._channels = fallback
-check("no dup when all tiers = ALL", m.route(85), [-100])
-check("no dup at 95", m.route(95), [-100])
+check("no dup when everything = ALL", m.route(85, "myntra"), [-100])
+check("base dedup myntra", m.route(65, "myntra"), [-100])
 
 # -- message format ---------------------------------------------------------
 p = Product(product_id="ABC123", brand="Titan", title="Raga Watch For Women",
