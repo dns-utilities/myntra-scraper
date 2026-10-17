@@ -191,6 +191,24 @@ Q-commerce discounts are shallow (mostly 10–35%), so a grocery base feed only
 makes sense with the empty-DB baseline below, or `SOURCE_BLINKIT_MIN_DISCOUNT_NEW=0`
 for a targeted single-store test.
 
+### Egress matters more than headers here
+
+Both hosts defend themselves per-IP, and a **cloud/datacenter IP is refused
+outright** regardless of what we send:
+
+* **Blinkit** refuses a wrong TLS fingerprint with a flat 403 on the search call
+  itself. Which fingerprints it accepts shifts, so the scraper leads with
+  `chrome136` and falls back through a known-good list. That is enough from a
+  home connection — but from a datacenter IP *every* fingerprint gets 403.
+* **BigBasket**'s `/listing-svc` sits behind Akamai Bot Manager and needs both a
+  residential IP *and* a genuine (non-headless) browser session; `curl_cffi`
+  alone gets 403 even from a home connection.
+
+So on a cloud host, point these two at a residential/ISP egress with
+`SOURCE_BLINKIT_PROXY` / `SOURCE_BIGBASKET_PROXY`; Myntra and Croma are happy on
+the cloud IP and need no proxy. Left without one, the q-commerce sources park
+themselves via the circuit breaker instead of hammering the wall.
+
 ## Send pacing (the anti-flood gate)
 
 The bot posts through a three-bucket gate — global, per-bot, and **per-chat** —
@@ -320,8 +338,8 @@ survive a genuine price drop into range.
 | `SEND_PER_CHAT_PER_MIN` | no | `18` | per-channel ceiling (Telegram's is ~20) |
 | `SEND_MAX_QUEUE` | no | `5000` | queue must never grow without bound |
 | `BASELINE_ON_EMPTY` | no | `true` | a cleared DB records silently, never floods |
-| `SOURCE_BLINKIT_*` | no | spec default | `ENABLED=true`, `RPS=3`, `IMPERSONATE=chrome124`, `PAGE_LIMIT=15`, `MAX_PAGES=6`, `CONCURRENCY=5`, `COOLDOWN=20`, `WARM_COOKIES=true` |
-| `SOURCE_BIGBASKET_*` | no | spec default | `ENABLED=true`, `RPS=4`, `IMPERSONATE=chrome`, `MAX_PAGES=5`, `CONCURRENCY=8`, `COOLDOWN=25`, `COOKIE_TTL=600` |
+| `SOURCE_BLINKIT_*` | no | spec default | `ENABLED=true`, `RPS=3`, `IMPERSONATE=chrome136` (+ fallback list), `PAGE_LIMIT=15`, `MAX_PAGES=6`, `CONCURRENCY=5`, `COOLDOWN=20`, `WARM_COOKIES=true`, `PROXY=` |
+| `SOURCE_BIGBASKET_*` | no | spec default | `ENABLED=true`, `RPS=4`, `IMPERSONATE=chrome`, `MAX_PAGES=5`, `CONCURRENCY=8`, `COOLDOWN=25`, `COOKIE_TTL=600`, `PROXY=` |
 | `GEOCODE_ENABLED` | no | `true` | resolve Blinkit `pin:` lines via a public geocoder |
 | `GEOCODE_URL` | no | Nominatim | geocoder endpoint (results cached on the volume) |
 | `AUTO_CLEAR_ENABLED` | no | `true` | re-post eligible deals on a cooldown |
@@ -335,6 +353,7 @@ survive a genuine price drop into range.
 | `SOURCE_<NAME>_INTERVAL` | no | `0` | seconds between runs; `0` = every tick |
 | `SOURCE_<NAME>_ENABLED` | no | `true` | switch one source off without touching the rest |
 | `SOURCE_<NAME>_IMPERSONATE` | no | spec default | curl_cffi TLS profile for that source |
+| `SOURCE_<NAME>_PROXY` | no | direct | per-source egress, `http://user:pass@host:port` — needed for the q-commerce hosts on a cloud IP |
 | `SOURCE_<NAME>_MAX_PAGES` / `_CONCURRENCY` / `_MIN_DISCOUNT_*` | no | spec default | per-source overrides |
 | `SOURCE_MYNTRA_*` | no | spec default | `RPS=5`, `IMPERSONATE=chrome131_android`, `MAX_PAGES=5`, `CONCURRENCY=20` |
 | `SOURCE_CROMA_*` | no | spec default | `ENABLED=true`, `RPS=5`, `IMPERSONATE=chrome120`, `CHANNEL_CODE=400049`, `MAX_PAGES=10`, `CONCURRENCY=6` |

@@ -37,8 +37,9 @@ class BlinkitScraper:
                  max_pages: int = 6, page_limit: int = blinkit_api.PAGE_LIMIT,
                  rate_limiter=None, cooldown_seconds: int = 20,
                  max_attempts: int = 6, min_products: int = 5,
-                 warm_cookies: bool = True) -> None:
+                 warm_cookies: bool = True, proxy: str = "") -> None:
         self._impersonate = impersonate
+        self._proxy = proxy or ""
         self._concurrency = max(1, concurrency)
         self._max_pages = max(1, max_pages)
         self._page_limit = max(1, page_limit)
@@ -63,9 +64,17 @@ class BlinkitScraper:
         self.forbidden = 0
         self.rate_limited = 0
         self.aborted_runs = 0
-        log.info("Blinkit scraper ready | concurrency=%d pages=%d impersonate=%s rps=%s",
+        log.info("Blinkit scraper ready | concurrency=%d pages=%d impersonate=%s "
+                 "egress=%s rps=%s",
                  self._concurrency, self._max_pages, impersonate,
+                 "proxy" if self._proxy else "direct",
                  getattr(rate_limiter, "_rate", "unbounded"))
+
+    def _proxies(self) -> dict | None:
+        """curl_cffi proxy mapping, or None to connect directly."""
+        if not self._proxy:
+            return None
+        return {"http": self._proxy, "https": self._proxy}
 
     # -- politeness --------------------------------------------------------
     async def _wait_cooldown(self) -> None:
@@ -261,7 +270,8 @@ class BlinkitScraper:
         self._warmed.clear()      # a fresh session has no warmed cookies
         found: list[Product] = []
         lock = asyncio.Lock()
-        async with AsyncSession(impersonate=fingerprint) as session:
+        async with AsyncSession(impersonate=fingerprint,
+                                proxies=self._proxies()) as session:
             sem = asyncio.Semaphore(self._concurrency)
 
             async def job(point_now, url: str) -> None:

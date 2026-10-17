@@ -32,8 +32,9 @@ class BigBasketScraper:
     def __init__(self, impersonate: str = "chrome", concurrency: int = 8,
                  max_pages: int = 6, rate_limiter=None, cooldown_seconds: int = 25,
                  max_attempts: int = 6, min_products: int = 5,
-                 cookie_ttl: int = 600) -> None:
+                 cookie_ttl: int = 600, proxy: str = "") -> None:
         self._impersonate = impersonate
+        self._proxy = proxy or ""
         self._concurrency = max(1, concurrency)
         self._max_pages = max(1, max_pages)
         self._limiter = rate_limiter
@@ -59,9 +60,17 @@ class BigBasketScraper:
         self.forbidden = 0
         self.rate_limited = 0
         self.aborted_runs = 0
-        log.info("BigBasket scraper ready | concurrency=%d pages=%d ua=%s rps=%s",
+        log.info("BigBasket scraper ready | concurrency=%d pages=%d ua=%s "
+                 "egress=%s rps=%s",
                  self._concurrency, self._max_pages, self._ua[-24:],
+                 "proxy" if self._proxy else "direct",
                  getattr(rate_limiter, "_rate", "unbounded"))
+
+    def _proxies(self) -> dict | None:
+        """curl_cffi proxy mapping, or None to connect directly."""
+        if not self._proxy:
+            return None
+        return {"http": self._proxy, "https": self._proxy}
 
     # -- politeness --------------------------------------------------------
     async def _wait_cooldown(self) -> None:
@@ -228,7 +237,8 @@ class BigBasketScraper:
         self._consecutive_forbidden = 0
         found: list[Product] = []
         lock = asyncio.Lock()
-        async with AsyncSession(impersonate=self._impersonate, timeout=30) as session:
+        async with AsyncSession(impersonate=self._impersonate, timeout=30,
+                                proxies=self._proxies()) as session:
             sem = asyncio.Semaphore(self._concurrency)
 
             async def job(point_now, url: str) -> None:

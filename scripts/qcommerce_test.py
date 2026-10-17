@@ -623,6 +623,7 @@ def test_source_overrides() -> None:
         "SOURCE_BLINKIT_ENABLED": "false",
         "SOURCE_BLINKIT_WARM_COOKIES": "false",
         "SOURCE_BIGBASKET_INTERVAL": "1800",
+        "SOURCE_BIGBASKET_PROXY": "http://user:pw@127.0.0.1:8888",
         "SOURCE_BOGUS_NOTAFIELD": "1",
         "UNRELATED_VAR": "x",
     })
@@ -638,6 +639,10 @@ def test_source_overrides() -> None:
     check("override warm_cookies bool",
           parsed["blinkit"]["warm_cookies"], False)
     check("override interval float", parsed["bigbasket"]["interval"], 1800.0)
+    # The egress proxy is a plain text field, not a number, and the password's
+    # punctuation must survive the env round-trip intact.
+    check("override text proxy",
+          parsed["bigbasket"]["proxy"], "http://user:pw@127.0.0.1:8888")
     # A mis-split on the last underscore would invent sources like "blinkit_warm".
     check("source keys are exactly the four sources",
           sorted(parsed), ["bigbasket", "blinkit", "croma", "myntra"])

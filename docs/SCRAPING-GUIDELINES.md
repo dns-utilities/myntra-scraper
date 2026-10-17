@@ -295,11 +295,13 @@ SOURCE_BLINKIT_MAX_PAGES=6
 SOURCE_BLINKIT_PAGE_LIMIT=15
 SOURCE_BLINKIT_COOLDOWN=20    # back off on 429/403, seconds
 SOURCE_BLINKIT_WARM_COOKIES=true
+SOURCE_BLINKIT_PROXY=         # residential/ISP egress; cloud IPs are refused
 SOURCE_BIGBASKET_ENABLED=true
 SOURCE_BIGBASKET_RPS=4
 SOURCE_BIGBASKET_MAX_PAGES=5
 SOURCE_BIGBASKET_COOLDOWN=25
 SOURCE_BIGBASKET_COOKIE_TTL=600  # seconds before BigBasket cookies are re-warmed
+SOURCE_BIGBASKET_PROXY=       # residential/ISP egress; cloud IPs are refused
 GEOCODE_ENABLED=true
 GEOCODE_URL=https://nominatim.openstreetmap.org/search
 ```

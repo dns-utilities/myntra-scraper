@@ -66,12 +66,12 @@ def _env_bool(name: str, default: bool) -> bool:
 # The fields a ``SOURCE_<NAME>_<FIELD>`` env var may set. Every entry must name
 # a real ``SourceSpec`` attribute (see sources.py); that pairing is what keeps
 # the env surface and the spec from drifting apart.
-_SOURCE_KEYS = ("ENABLED", "INTERVAL", "RPS", "IMPERSONATE",
+_SOURCE_KEYS = ("ENABLED", "INTERVAL", "RPS", "IMPERSONATE", "PROXY",
                 "MIN_DISCOUNT_NEW", "MIN_DISCOUNT_EXISTING", "MAX_PAGES",
                 "CONCURRENCY", "PAGE_LIMIT", "COOLDOWN", "COOKIE_TTL",
                 "WARM_COOKIES", "CHANNEL_CODE")
 _SOURCE_FLOAT_KEYS = ("RPS", "INTERVAL")
-_SOURCE_TEXT_KEYS = ("IMPERSONATE", "CHANNEL_CODE")
+_SOURCE_TEXT_KEYS = ("IMPERSONATE", "PROXY", "CHANNEL_CODE")
 _SOURCE_BOOL_KEYS = ("ENABLED", "WARM_COOKIES")
 
 

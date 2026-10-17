@@ -62,6 +62,11 @@ class SourceSpec:
     # curl_cffi browser profile. Must match the UA family the scraper sends,
     # or the TLS fingerprint and the headers disagree.
     impersonate: str = ""
+    # Optional per-source egress, e.g. http://user:pass@host:port. Both
+    # q-commerce hosts refuse cloud/datacenter IPs outright, so a
+    # residential/ISP proxy is the supported way to keep them alive on a
+    # hosted box. "" means connect directly.
+    proxy: str = ""
     # Site-specific knobs. Each is read only by the source that has one.
     page_limit: int = 0         # Blinkit: items per request
     cooldown: int = 0           # q-commerce: seconds parked after 429/403
@@ -337,7 +342,7 @@ class BlinkitSource(SourceAdapter):
             spec.impersonate, spec.concurrency, spec.max_pages,
             spec.page_limit, rate_limiter=self._limiter,
             cooldown_seconds=spec.cooldown,
-            warm_cookies=spec.warm_cookies)
+            warm_cookies=spec.warm_cookies, proxy=spec.proxy)
 
     async def scrape_all(self, urls: list[str]) -> list[Product]:
         return await self._scraper.scrape_all(urls, self.points.all())
@@ -371,7 +376,7 @@ class BigBasketSource(SourceAdapter):
             spec.impersonate, spec.concurrency, spec.max_pages,
             rate_limiter=self._limiter,
             cooldown_seconds=spec.cooldown,
-            cookie_ttl=spec.cookie_ttl)
+            cookie_ttl=spec.cookie_ttl, proxy=spec.proxy)
 
     async def scrape_all(self, urls: list[str]) -> list[Product]:
         return await self._scraper.scrape_all(urls, self.points.all())
