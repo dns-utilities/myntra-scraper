@@ -8,6 +8,10 @@ channels, up-only duplicate filter, spam/blacklist, and notifier — and the
 notifier paces every send to Telegram's real limits, so a burst (or a cleared
 database) drains steadily instead of flooding a channel.
 
+> **Starting here? Read [`TODO.md`](TODO.md) first** — it is short, and it lists
+> the one thing that blocks the two grocery sources (clean egress) plus what is
+> left to build.
+
 ## Architecture
 
 ```text
