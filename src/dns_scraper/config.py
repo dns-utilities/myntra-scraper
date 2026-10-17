@@ -69,10 +69,10 @@ def _env_bool(name: str, default: bool) -> bool:
 _SOURCE_KEYS = ("ENABLED", "INTERVAL", "RPS", "IMPERSONATE", "PROXY",
                 "MIN_DISCOUNT_NEW", "MIN_DISCOUNT_EXISTING", "MAX_PAGES",
                 "CONCURRENCY", "PAGE_LIMIT", "COOLDOWN", "COOKIE_TTL",
-                "WARM_COOKIES", "CHANNEL_CODE")
+                "WARM_COOKIES", "CHANNEL_CODE", "QUIET_ALERTS")
 _SOURCE_FLOAT_KEYS = ("RPS", "INTERVAL")
 _SOURCE_TEXT_KEYS = ("IMPERSONATE", "PROXY", "CHANNEL_CODE")
-_SOURCE_BOOL_KEYS = ("ENABLED", "WARM_COOKIES")
+_SOURCE_BOOL_KEYS = ("ENABLED", "WARM_COOKIES", "QUIET_ALERTS")
 
 
 def _parse_source_overrides(env: dict) -> dict:

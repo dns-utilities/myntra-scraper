@@ -67,6 +67,10 @@ class SourceSpec:
     # residential/ISP proxy is the supported way to keep them alive on a
     # hosted box. "" means connect directly.
     proxy: str = ""
+    # Admin-alert suppression. The q-commerce pair fails constantly on a blocked
+    # egress IP, and those repeated DM warnings are noise — their counts still
+    # show up in /status and /diag, which is pull-based.
+    quiet_alerts: bool = False
     # Site-specific knobs. Each is read only by the source that has one.
     page_limit: int = 0         # Blinkit: items per request
     cooldown: int = 0           # q-commerce: seconds parked after 429/403
@@ -433,7 +437,7 @@ def build_sources(settings: Settings) -> list[SourceAdapter]:
             default_location="", locations_file=settings.blinkit_locations_file,
             interval=0, rps=3.0, max_pages=6, concurrency=5,
             impersonate=blinkit_api.DEFAULT_IMPERSONATE, page_limit=15,
-            cooldown=20, warm_cookies=True,
+            cooldown=20, warm_cookies=True, quiet_alerts=True,
             min_discount_new=settings.min_discount_new,
             min_discount_existing=settings.min_discount_existing,
         ),
@@ -442,7 +446,7 @@ def build_sources(settings: Settings) -> list[SourceAdapter]:
             links_file=settings.bigbasket_links_file, seen_db=settings.bigbasket_seen_db,
             default_location="", locations_file=settings.bigbasket_locations_file,
             interval=0, rps=4.0, max_pages=5, concurrency=8,
-            impersonate="chrome", cooldown=25, cookie_ttl=600,
+            impersonate="chrome", cooldown=25, cookie_ttl=600, quiet_alerts=True,
             min_discount_new=settings.min_discount_new,
             min_discount_existing=settings.min_discount_existing,
         ),

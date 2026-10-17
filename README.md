@@ -114,8 +114,8 @@ Every deal message also carries two buttons:
 
 | Button | Behaviour |
 |---|---|
-| 🚫 **Blacklist Product** | one tap; blocks that `(source, product_id, price)` only. A later price drop on the same product still alerts. Comes with an ↩️ Undo button. |
-| 🏷️ **Blacklist Brand** | prompts for a percentage, then confirms with ✅/❌. Brand is resolved from the stored brand field, falling back to the message headline, then the first word of the title — so you see what will be blocked before you commit. |
+| 🚫 **Blacklist Product** | one tap; blocks that `(source, product_id, price)` only. A later price drop on the same product still alerts. The message's buttons become ↩️ Undo in place. |
+| 🏷️ **Blacklist Brand** | the message's buttons become `✅ Block "brand"` / `✏️ Custom` / `❌ Cancel` **in place** — no DM round-trip. Brand is resolved from the stored brand field, falling back to the message headline, then the first word of the title. **✅ Block** blacklists the brand outright; **✏️ Custom** asks you to type a name in the bot DM (there is no way to type in a channel) and accepts `arry` (every deal) or `arry,99` (only post at 99%+). |
 
 ## Message format
 
@@ -342,8 +342,8 @@ survive a genuine price drop into range.
 | `SEND_PER_CHAT_PER_MIN` | no | `18` | per-channel ceiling (Telegram's is ~20) |
 | `SEND_MAX_QUEUE` | no | `5000` | queue must never grow without bound |
 | `BASELINE_ON_EMPTY` | no | `true` | a cleared DB records silently, never floods |
-| `SOURCE_BLINKIT_*` | no | spec default | `ENABLED=true`, `RPS=3`, `IMPERSONATE=chrome136` (+ fallback list), `PAGE_LIMIT=15`, `MAX_PAGES=6`, `CONCURRENCY=5`, `COOLDOWN=20`, `WARM_COOKIES=true`, `PROXY=` |
-| `SOURCE_BIGBASKET_*` | no | spec default | `ENABLED=true`, `RPS=4`, `IMPERSONATE=chrome`, `MAX_PAGES=5`, `CONCURRENCY=8`, `COOLDOWN=25`, `COOKIE_TTL=600`, `PROXY=` |
+| `SOURCE_BLINKIT_*` | no | spec default | `ENABLED=true`, `RPS=3`, `IMPERSONATE=chrome136` (+ fallback list), `PAGE_LIMIT=15`, `MAX_PAGES=6`, `CONCURRENCY=5`, `COOLDOWN=20`, `WARM_COOKIES=true`, `PROXY=`, `QUIET_ALERTS=true` |
+| `SOURCE_BIGBASKET_*` | no | spec default | `ENABLED=true`, `RPS=4`, `IMPERSONATE=chrome`, `MAX_PAGES=5`, `CONCURRENCY=8`, `COOLDOWN=25`, `COOKIE_TTL=600`, `PROXY=`, `QUIET_ALERTS=true` |
 | `GEOCODE_ENABLED` | no | `true` | resolve Blinkit `pin:` lines via a public geocoder |
 | `GEOCODE_URL` | no | Nominatim | geocoder endpoint (results cached on the volume) |
 | `AUTO_CLEAR_ENABLED` | no | `true` | re-post eligible deals on a cooldown |

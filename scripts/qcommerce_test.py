@@ -678,6 +678,43 @@ def test_source_overrides() -> None:
               settings.channel_plan.base_for("myntra"), -1001)
 
 
+def test_quiet_alerts() -> None:
+    print("\n-- quiet-source alert suppression --")
+    from types import SimpleNamespace
+
+    from dns_scraper.app import ScraperApp
+    from dns_scraper.config import Settings, _parse_source_overrides
+    from dns_scraper.sources import build_sources
+
+    parsed = _parse_source_overrides({"SOURCE_BLINKIT_QUIET_ALERTS": "false"})
+    check("quiet_alerts parses as a bool", parsed["blinkit"]["quiet_alerts"], False)
+
+    sent: list[str] = []
+    quiet = SimpleNamespace(spec=SimpleNamespace(quiet_alerts=True))
+    loud = SimpleNamespace(spec=SimpleNamespace(quiet_alerts=False))
+    fake = SimpleNamespace(controller=SimpleNamespace(
+        reply=lambda text, *a, **k: sent.append(text)),
+        _by_name={"blinkit": quiet, "myntra": loud}, _alerts={})
+    ScraperApp._alert(fake, "blinkit", "returned 0 products")
+    check("quiet source stays silent", sent, [])
+    ScraperApp._alert(fake, "myntra", "returned 0 products")
+    check("loud source still alerts", len(sent), 1)
+    ScraperApp._alert(fake, "myntra", "again within cooldown")
+    check("alert cooldown still applies", len(sent), 1)
+
+    # And the q-commerce pair ships quiet; the national pair does not.
+    with tempfile.TemporaryDirectory() as tmpdir:
+        settings = Settings(channel_bases={"default": -1001},
+                            data_dir=Path(tmpdir), geocode_enabled=False)
+        by_name = {s.name: s for s in build_sources(settings)}
+        check("blinkit quiet by default",
+              by_name["blinkit"].spec.quiet_alerts, True)
+        check("bigbasket quiet by default",
+              by_name["bigbasket"].spec.quiet_alerts, True)
+        check("myntra still alerts",
+              by_name["myntra"].spec.quiet_alerts, False)
+
+
 def main() -> int:
     test_parsers()
     test_api_modules()
@@ -687,6 +724,7 @@ def main() -> int:
     test_send_gate()
     test_queue_and_outbox()
     test_baseline()
+    test_quiet_alerts()
 
     print("\n%s  (%d failure%s)" % ("ALL PASS" if not FAILS else "FAILURES",
                                     len(FAILS), "" if len(FAILS) == 1 else "s"))

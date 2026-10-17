@@ -59,7 +59,8 @@ HELP_TEXT = (
     "/help — this message\n"
     "\n"
     "Deal messages carry two buttons: 🚫 Blacklist Product (exact price only) "
-    "and 🏷️ Blacklist Brand (asks for a %, then confirms).\n"
+    "and 🏷️ Blacklist Brand. Blacklist Brand opens an in-place prompt — "
+    "✅ Block \"brand\", ✏️ Custom (type a name, or name,99), or ❌ Cancel.\n"
     "\n"
     "Blinkit/BigBasket are priced per delivery point, so a deal's footer shows "
     "which point it came from. Posting is paced to Telegram's limits: at most "
@@ -95,13 +96,19 @@ class ControllerBot:
             log.debug("Controller API error: %s", exc)
         return {}
 
-    def answer_callback(self, callback_query_id: str, text: str) -> None:
-        """Toast shown when a deal button is pressed."""
+    def answer_callback(self, callback_query_id: str, text: str,
+                        token: str | None = None) -> None:
+        """Toast shown when a deal button is pressed.
+
+        ``token`` must be the bot that *received* the callback — Telegram only
+        lets the original bot answer, and the notifier round-robins deal posts
+        across every token.
+        """
         if not callback_query_id:
             return
         try:
             requests.post(
-                "https://api.telegram.org/bot%s/answerCallbackQuery" % self._token,
+                "https://api.telegram.org/bot%s/answerCallbackQuery" % (token or self._token),
                 data={"callback_query_id": callback_query_id, "text": text[:190]},
                 timeout=10)
         except Exception as exc:
@@ -544,7 +551,7 @@ class ControllerBot:
             cq = update["callback_query"]
             buttons: DealButtonHandler | None = getattr(self._app, "_deal_buttons", None)
             if buttons:
-                buttons.handle_callback(cq)
+                buttons.handle_callback(cq, token)
             return
         msg = update.get("message") or update.get("channel_post") or {}
         text = msg.get("text", "")
@@ -563,7 +570,7 @@ class ControllerBot:
         # An open button conversation owns the next message, whatever it says.
         buttons: DealButtonHandler | None = getattr(self._app, "_deal_buttons", None)
         if buttons and is_admin and buttons.pending_prompt(chat_id):
-            response = buttons.handle_text(text, chat_id)
+            response = buttons.handle_text(text, chat_id, token)
             if response:
                 self.reply(response, chat_id)
             return
@@ -602,24 +609,40 @@ class ControllerBot:
         for thread in self._threads:
             thread.join(timeout=5)
 
-    def _post(self, method: str, **data) -> dict:
+    def _post(self, method: str, token: str | None = None, **data) -> dict:
         try:
             resp = requests.post(
-                "https://api.telegram.org/bot%s/%s" % (self._token, method),
+                "https://api.telegram.org/bot%s/%s" % (token or self._token, method),
                 json=data, timeout=15)
             if resp.status_code == 200:
                 return resp.json()
+            log.debug("%s -> HTTP %d %s", method, resp.status_code, resp.text[:200])
         except Exception as exc:
             log.debug("Controller API error: %s", exc)
         return {}
 
+    def edit_markup(self, chat_id: int, message_id: int, keyboard: dict,
+                    token: str | None = None) -> bool:
+        """Rewrite a message's inline keyboard in place.
+
+        Used for the interactive deal buttons: the same message swaps from
+        "Blacklist Brand" to a Confirm/Custom/Cancel prompt and then to the
+        committed rule, instead of the bot posting a new DM per step.
+        """
+        if not chat_id or not message_id:
+            return False
+        result = self._post("editMessageReplyMarkup", token=token,
+                            chat_id=chat_id, message_id=message_id,
+                            reply_markup=keyboard)
+        return bool(result.get("ok"))
+
     def reply(self, text: str, chat_id: int | None = None,
-              keyboard: dict | None = None) -> None:
+              keyboard: dict | None = None, token: str | None = None) -> None:
         payload = {"chat_id": chat_id or self._admin, "text": text,
                    "disable_web_page_preview": True}
         if keyboard:
             payload["reply_markup"] = keyboard
-        self._post("sendMessage", **payload)
+        self._post("sendMessage", token=token, **payload)
 
     def verify(self) -> str:
         me = self._api("getMe")

@@ -114,7 +114,8 @@ class ScraperApp:
             self.settings.admin_chat_id,
             set(self.settings.channel_plan.destinations()),
             send=self.controller.reply,
-            answer=self.controller.answer_callback)
+            answer=self.controller.answer_callback,
+            edit=self.controller.edit_markup)
 
     # -- source handles (kept as attributes for the controller + /status) ---
     @property
@@ -367,8 +368,18 @@ class ScraperApp:
                 log.warning("Prune failed for %s: %s", source.name, exc)
 
     def _alert(self, source_name: str, message: str) -> None:
-        """Rate-limited admin notification for source problems."""
+        """Rate-limited admin notification for source problems.
+
+        Sources flagged ``quiet_alerts`` (the q-commerce pair) stay silent:
+        their failures are a known egress problem, not news, and the repeated
+        warnings are worse than useless. Their counters remain pullable with
+        /status and /diag.
+        """
         if not self.controller:
+            return
+        source = self._by_name.get(source_name)
+        if source is not None and getattr(source.spec, "quiet_alerts", False):
+            log.info("[%s] alert suppressed (quiet source): %s", source_name, message)
             return
         now = time.monotonic()
         if now - self._alerts.get(source_name, 0) < ALERT_COOLDOWN_SECONDS:

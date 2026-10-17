@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from dns_scraper.brand_registry import BrandRegistry, normalize
 from dns_scraper.channels import ChannelPlan
-from dns_scraper.deal_buttons import (deal_keyboard, confirm_keyboard,
+from dns_scraper.deal_buttons import (deal_keyboard, brand_confirm_keyboard,
                                          extract_product_id, parse_deal_message)
 from dns_scraper.models import DiscountTier, Product
 from dns_scraper.notifier import DealNotifier
@@ -250,7 +250,7 @@ check("parsed app", parsed["app"], "Myntra")
 check("parsed pid", parsed["product_id"], "ABC123")
 check("extract pid", extract_product_id("https://www.myntra.com/ABC123"), "ABC123")
 check("extract pid buy", extract_product_id("https://www.myntra.com/buy/ABC123?pid=XYZ1"), "XYZ1")
-check("confirm keyboard", confirm_keyboard(60)["inline_keyboard"][0][0]["callback_data"], "blk|c|60")
+check("confirm keyboard", brand_confirm_keyboard("arry")["inline_keyboard"][0][0]["callback_data"], "blk|c")
 
 # -- normalize ---------------------------------------------------------------
 check("normalize punct", normalize("L'Oréal  Paris-2024!"), "l or al paris 2024")
