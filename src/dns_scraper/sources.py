@@ -27,6 +27,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 
+from dns_scraper import blinkit_api
 from dns_scraper.config import Settings
 from dns_scraper.locations import LocationSet, PincodeCache, build_location_set
 from dns_scraper.models import Product
@@ -426,7 +427,8 @@ def build_sources(settings: Settings) -> list[SourceAdapter]:
             links_file=settings.blinkit_links_file, seen_db=settings.blinkit_seen_db,
             default_location="", locations_file=settings.blinkit_locations_file,
             interval=0, rps=3.0, max_pages=6, concurrency=5,
-            impersonate="chrome124", page_limit=15, cooldown=20, warm_cookies=True,
+            impersonate=blinkit_api.DEFAULT_IMPERSONATE, page_limit=15,
+            cooldown=20, warm_cookies=True,
             min_discount_new=settings.min_discount_new,
             min_discount_existing=settings.min_discount_existing,
         ),

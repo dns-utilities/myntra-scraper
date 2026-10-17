@@ -32,7 +32,8 @@ log = logging.getLogger("dns_scraper.blinkit")
 
 
 class BlinkitScraper:
-    def __init__(self, impersonate: str = "chrome124", concurrency: int = 5,
+    def __init__(self, impersonate: str = blinkit_api.DEFAULT_IMPERSONATE,
+                 concurrency: int = 5,
                  max_pages: int = 6, page_limit: int = blinkit_api.PAGE_LIMIT,
                  rate_limiter=None, cooldown_seconds: int = 20,
                  max_attempts: int = 6, min_products: int = 5,
@@ -215,6 +216,18 @@ class BlinkitScraper:
         return collected
 
     # -- entry point -------------------------------------------------------
+    def _fingerprints(self) -> tuple[str, ...]:
+        """The impersonation to try first, then the known-good fallbacks.
+
+        A refused fingerprint is a hard 403, so a single hard-coded value is a
+        single point of failure. The configured value leads (an operator
+        override still wins) and ``blinkit_api.IMPERSONATIONS`` follows.
+        """
+        primary = self._impersonate or blinkit_api.DEFAULT_IMPERSONATE
+        return tuple(dict.fromkeys([primary] + [
+            candidate for candidate in blinkit_api.IMPERSONATIONS
+            if candidate != primary]))
+
     async def scrape_all(self, urls: list[str], points: list) -> list[Product]:
         if not points:
             log.warning("Blinkit: no delivery points resolved — nothing to scrape")
@@ -225,11 +238,30 @@ class BlinkitScraper:
         if not urls:
             log.warning("Blinkit: no usable search terms in the links file")
             return []
+        candidates = self._fingerprints()
+        found: list[Product] = []
+        for index, fingerprint in enumerate(candidates):
+            found = await self._sweep(fingerprint, urls, points)
+            if not self._abort_run:
+                return found
+            # Every request from this fingerprint was refused: not a flake, and
+            # not worth finishing the sweep. Try the next one before giving up.
+            self.aborted_runs += 1
+            self._abort_run = False
+            if index + 1 < len(candidates):
+                log.warning("Blinkit: %s was refused for every request — retrying "
+                            "the run as %s", fingerprint, candidates[index + 1])
+        return found
+
+    async def _sweep(self, fingerprint: str, urls: list[str],
+                     points: list) -> list[Product]:
+        """One full pass with a single impersonation profile."""
         self._abort_run = False
         self._consecutive_forbidden = 0
+        self._warmed.clear()      # a fresh session has no warmed cookies
         found: list[Product] = []
         lock = asyncio.Lock()
-        async with AsyncSession(impersonate=self._impersonate) as session:
+        async with AsyncSession(impersonate=fingerprint) as session:
             sem = asyncio.Semaphore(self._concurrency)
 
             async def job(point_now, url: str) -> None:
@@ -258,8 +290,6 @@ class BlinkitScraper:
                         break
                     if i + batch < len(urls):
                         await asyncio.sleep(0.5)
-        if self._abort_run:
-            self.aborted_runs += 1
         self._warned = False
         return found
 

@@ -189,6 +189,24 @@ def test_api_modules() -> None:
     check("sponsored flagged", blinkit_api.is_sponsored({"is_sponsored": True}), True)
     check("sponsored absent", blinkit_api.is_sponsored({"product_id": 1}), False)
 
+    # Blinkit answers a refused fingerprint with a flat 403 on the search call.
+    # chrome124/chrome131 are refused by its edge (measured live), so the
+    # default must be a fingerprint that answers, and the chain must not repeat.
+    check("default fingerprint is a candidate",
+          blinkit_api.DEFAULT_IMPERSONATE in blinkit_api.IMPERSONATIONS, True)
+    check("default is not a refused fingerprint",
+          blinkit_api.DEFAULT_IMPERSONATE in
+          ("chrome119", "chrome123", "chrome124", "chrome131"), False)
+    from dns_scraper.blinkit_scraper import BlinkitScraper
+    chain = BlinkitScraper()._fingerprints()
+    check("fingerprint chain leads with the default",
+          chain[0], blinkit_api.DEFAULT_IMPERSONATE)
+    check("fingerprint chain covers every candidate",
+          len(chain), len(blinkit_api.IMPERSONATIONS))
+    override = BlinkitScraper(impersonate="chrome124")._fingerprints()
+    check("operator override still leads", override[0], "chrome124")
+    check("override is not repeated in the fallbacks", override.count("chrome124"), 1)
+
     print("\n-- bigbasket api --")
     from dns_scraper import bigbasket_api
 

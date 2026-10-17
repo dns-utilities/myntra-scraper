@@ -25,8 +25,16 @@ SEARCH_URL = "https://blinkit.com/v1/layout/search"
 HOME_URL = "https://blinkit.com/"
 PRODUCT_CARD = "product_card_snippet_type_2"
 PAGE_LIMIT = 15
-USER_AGENT = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-              "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+# Which browser fingerprints Blinkit's edge accepts moves over time, and a
+# refused fingerprint is answered with a flat 403 on the search call itself --
+# not a rate limit, and not something a retry fixes. Measured directly:
+# chrome124 and chrome131 were refused while chrome136, chrome133a, safari18_0
+# and firefox133 answered with real product cards. So the scraper leads with a
+# known-good default and walks this list when a fingerprint is refused, rather
+# than dying on one hard-coded value.
+IMPERSONATIONS = ("chrome136", "chrome133a", "safari18_0", "firefox133",
+                  "chrome120")
+DEFAULT_IMPERSONATE = IMPERSONATIONS[0]
 
 # Cards that advertise themselves as paid placement. The raw layout payload
 # names this differently across builds, so every spelling we have seen is
@@ -68,7 +76,10 @@ def headers(point_payload: dict) -> dict:
         "content-type": "application/json",
         "origin": "https://blinkit.com",
         "referer": "https://blinkit.com/",
-        "user-agent": USER_AGENT,
+        # No user-agent on purpose: curl_cffi supplies the one matching the
+        # impersonated fingerprint, and a mismatched UA is a bot signal of its
+        # own (the old hard-coded Chrome/124 UA sat on top of whichever
+        # fingerprint was in use).
         # The trio that makes Blinkit answer with real product results.
         "app_client": "consumer_web",
         "platform": "desktop_web",
@@ -79,7 +90,6 @@ def headers(point_payload: dict) -> dict:
 
 def home_headers(point_payload: dict) -> dict:
     return {
-        "user-agent": USER_AGENT,
         "accept": "text/html,application/xhtml+xml",
         "lat": str(point_payload.get("lat", "")),
         "lon": str(point_payload.get("lon", "")),
