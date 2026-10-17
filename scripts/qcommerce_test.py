@@ -329,6 +329,24 @@ def test_routing() -> None:
     check("no base at all drops the deal",
           ChannelPlan(tiers={70: -1}).route(10, "blinkit"), [])
 
+    # A band with no channel of its own falls back to the *dealing source's*
+    # base, so a "bases only" deployment still delivers deep discounts instead
+    # of losing the best deals to a variable nobody set.
+    bases_only = ChannelPlan(bases={"default": -3000, "myntra": -3001, "croma": -3002},
+                             tiers={})
+    check("unset tier falls back to myntra base",
+          bases_only.route(85, "myntra"), [-3001])
+    check("unset tier falls back to croma base",
+          bases_only.route(95, "croma"), [-3002])
+    check("source with no base of its own inherits the default",
+          bases_only.route(70, "blinkit"), [-3000])
+    check("one-channel deployment still routes tiers to the default",
+          ChannelPlan(bases={"default": -4001}, tiers={}).route(95, "myntra"),
+          [-4001])
+    check("band set wins over the source base",
+          ChannelPlan(bases={"myntra": -3001}, tiers={70: -5005}).route(75, "myntra"),
+          [-5005])
+
 
 # --------------------------------------------------------------------------
 # Send gate + queue ceiling + outbox

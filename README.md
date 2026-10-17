@@ -157,6 +157,12 @@ So a base channel carries everything *below* 70% for that one source, and the
 tier channels stay combined across all sources. `/status` prints the live
 routing map.
 
+Configuring **only the bases** is already a complete setup: a band with no
+channel of its own falls back to the dealing source's own base, so you never
+lose a 95% deal to a tier variable you forgot to set. `CHANNEL_BASE_DEFAULT` is
+therefore only needed for a source with no base at all — or for a one-channel
+deployment, where every base and band inherits it.
+
 Badges in the headline: 95+ 💎✨ · 90+ 🔥 · 80+ 🚨.
 
 ## Hyper-local sources (Blinkit, BigBasket)
@@ -302,9 +308,9 @@ survive a genuine price drop into range.
 | `CHANNEL_BASE_CROMA` | no | `CHANNEL_BASE_DEFAULT` | Croma base feed (below 70%) |
 | `CHANNEL_BASE_BLINKIT` | no | `CHANNEL_BASE_DEFAULT` | Blinkit base feed (below 70%) |
 | `CHANNEL_BASE_BIGBASKET` | no | `CHANNEL_BASE_DEFAULT` | BigBasket base feed (below 70%) |
-| `CHANNEL_TIER_70` | no | `CHANNEL_BASE_DEFAULT` | 70–79% deals (shared by all sources) |
-| `CHANNEL_TIER_80` | no | `CHANNEL_BASE_DEFAULT` | 80–89% deals (shared by all sources) |
-| `CHANNEL_TIER_90` | no | `CHANNEL_BASE_DEFAULT` | 90%+ deals (shared by all sources) |
+| `CHANNEL_TIER_70` | no | source's own base | 70–79% deals (shared by all sources) |
+| `CHANNEL_TIER_80` | no | source's own base | 80–89% deals (shared by all sources) |
+| `CHANNEL_TIER_90` | no | source's own base | 90%+ deals (shared by all sources) |
 | `SEND_GLOBAL_PER_SEC` | no | `20` | overall send ceiling, all bots + chats |
 | `SEND_PER_BOT_PER_SEC` | no | `15` | per-bot send ceiling |
 | `SEND_PER_CHAT_PER_MIN` | no | `18` | per-channel ceiling (Telegram's is ~20) |

@@ -260,7 +260,7 @@ CHANNEL_BASE_BLINKIT=      # per-source base, below 70%
 CHANNEL_BASE_BIGBASKET=
 CHANNEL_TIER_70=           # 70-79%, shared by every source
 CHANNEL_TIER_80=           # 80-89%
-CHANNEL_TIER_90=           # 90%+
+CHANNEL_TIER_90=           # 90%+ (an unset band falls back to its source's base)
 
 # --- send pacing (the anti-flood gate) ---
 SEND_GLOBAL_PER_SEC=20

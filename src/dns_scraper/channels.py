@@ -10,6 +10,11 @@ A deal belongs to exactly one family:
   is tier 70, 80% is tier 80. The keys are floors rather than "70plus" because
   "plus" would be false — the band stops at 79, it is not "70 and above".
 
+A band with no channel of its own falls back to the *dealing source's* base, so
+a deployment that configures only bases still delivers its deep discounts to
+the right feed instead of dropping them. That is why ``CHANNEL_BASE_DEFAULT``
+can be left unset once every source has a base: nothing depends on it.
+
 Modelled as a value object instead of a flat ``dict[str, int]`` so the routing
 rule is unit-testable on its own and no caller has to know how a tier is
 spelled internally.
@@ -58,8 +63,9 @@ class ChannelPlan:
         """Build a plan from ``CHANNEL_BASE_*`` / ``CHANNEL_TIER_*`` variables.
 
         Bases are discovered generically rather than from a fixed source list,
-        so adding a source needs no edit here. Every unset base and tier
-        inherits ``CHANNEL_BASE_DEFAULT``.
+        so adding a source needs no edit here. Every unset base inherits
+        ``CHANNEL_BASE_DEFAULT``; an unset tier is left at 0 and falls back to
+        the dealing source's base at route time.
         """
         default = _chat_id(env.get(BASE_VAR), 0)
         bases: dict[str, int] = {}
@@ -69,8 +75,8 @@ class ChannelPlan:
             name = key[len(CHANNEL_BASE_PREFIX):].strip().lower()
             if name and name != DEFAULT_BASE:
                 bases[name] = _chat_id(raw, default)
-        tiers = {floor: _chat_id(env.get("%s%d" % (CHANNEL_TIER_PREFIX, floor)),
-                                 default) for floor in TIER_FLOORS}
+        tiers = {floor: _chat_id(env.get("%s%d" % (CHANNEL_TIER_PREFIX, floor)), 0)
+                 for floor in TIER_FLOORS}
         return cls({DEFAULT_BASE: default,
                     **{name: bases[name] for name in sorted(bases)}}, tiers)
 
@@ -78,17 +84,25 @@ class ChannelPlan:
         """The base feed for one source, falling back to the default base."""
         return int(self.bases.get(source) or self.bases.get(DEFAULT_BASE) or 0)
 
+    def tier_chat(self, floor: int) -> int:
+        """The shared feed for a tier band, or 0 when that band has none."""
+        return int(self.tiers.get(int(floor)) or 0)
+
     def route(self, discount: int, source: str = "") -> list[int]:
         """The chat ids one deal belongs to.
 
         A list rather than an int because the contract is "everywhere this deal
         belongs"; callers must not assume there is exactly one destination.
+
+        A sub-tier deal goes to its own source's base. A tier deal goes to that
+        band's shared channel — or, if that band has no channel configured, to
+        the source's base: better one feed too coarse than a 95% deal silently
+        dropped because a tier variable was never set.
         """
         tier = DiscountTier.for_discount(discount)
-        if tier is DiscountTier.BASE:
+        chat = 0 if tier is DiscountTier.BASE else self.tier_chat(int(tier))
+        if not chat:
             chat = self.base_for(source)
-        else:
-            chat = int(self.tiers.get(int(tier)) or 0)
         return [chat] if chat else []
 
     def destinations(self) -> list[int]:
@@ -125,14 +139,19 @@ class ChannelPlan:
         """One line describing where each band posts, for the /status header."""
         default = self.bases.get(DEFAULT_BASE) or 0
 
-        def show(chat: int) -> str:
+        def label(chat: int) -> str:
             if not chat:
                 return "unset"
             return DEFAULT_BASE if chat == default else str(chat)
 
+        def tier_label(floor: int) -> str:
+            # An unset band resolves to each source's own base, so there is no
+            # single id to print — say what actually happens.
+            chat = self.tier_chat(floor)
+            return label(chat) if chat else "per-source base"
+
         named = [n for n in sorted(self.bases) if n != DEFAULT_BASE and self.bases[n]]
         parts = ["<70%->base:" + (",".join(named) if named else DEFAULT_BASE)]
-        parts += ["%s->%s" % (band_label(f), show(self.tiers.get(f, 0)))
-                  for f in TIER_FLOORS]
+        parts += ["%s->%s" % (band_label(f), tier_label(f)) for f in TIER_FLOORS]
         return ("routes: " + " | ".join(parts)
                 + "  [base per source, tiers shared and exclusive]")
