@@ -65,8 +65,9 @@ class ScraperApp:
             log.warning("No base channel for %s — deals below %d%% will be dropped. "
                         "Set CHANNEL_BASE_DEFAULT, or CHANNEL_BASE_<NAME> per source.",
                         ", ".join(homeless), min(TIER_FLOORS))
-        # Sources whose empty-DB baseline has already been laid down, so the
-        # "first run records, does not post" rule fires exactly once per source.
+        # Reporting only: sources whose seen-DB has held rows at some point this
+        # boot. The baseline *decision* is the DB's emptiness at run time (see
+        # _baseline_pending), so this set never suppresses a re-baseline.
         self._baselined: set[str] = set()
         self._shutdown_done = False
 
@@ -222,17 +223,16 @@ class ScraperApp:
             self.auto_clear_policy.min_discount)
 
     def _baseline_pending(self, source: SourceAdapter, seen_store) -> bool:
-        """True on a source's very first run over an empty seen-DB.
+        """True when this run should record the catalogue instead of posting it.
 
-        Clearing the database is a normal operation (redeploy, migration), but
-        on a discount feed "empty database" means every qualifying product is
-        new at once. So the first cycle records the current state and posts
-        nothing; only changes from the next cycle onwards are announced. This
-        is what stops a wipe from becoming a wall of messages.
+        The signal is the *seen-DB's emptiness*, deliberately not a per-boot
+        flag. An empty store means every qualifying product is about to look
+        brand new at once, and that is true whether the emptiness came from a
+        first deploy, a wiped volume, or a ``/clear_all`` sent while the bot was
+        already running. A per-process flag misses that last case and re-announces
+        the whole catalogue -- the exact wall of messages this exists to prevent.
         """
         if not self.settings.baseline_on_empty:
-            return False
-        if source.name in self._baselined:
             return False
         try:
             empty = seen_store.stats().get("tracked", 0) == 0
@@ -240,8 +240,11 @@ class ScraperApp:
             log.debug("Baseline check failed for %s: %s", source.name, exc)
             return False
         if not empty:
-            self._baselined.add(source.name)
+            self._baselined.add(source.name)      # reporting only, see /status
             return False
+        if source.name in self._baselined:
+            log.warning("[%s] seen-DB went empty again -- re-baselining rather "
+                        "than re-announcing the catalogue", source.name)
         return True
 
     def _process_products(self, products, source: SourceAdapter) -> tuple[int, int]:

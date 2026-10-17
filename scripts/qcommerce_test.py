@@ -505,6 +505,19 @@ def test_baseline() -> None:
         res = asyncio.run(app.run_source(fake))
         check("new deal after baseline posts", res["queued"], 1)
 
+        # Regression: /clear_all sent while the bot is already running. The next
+        # cycle must re-baseline and post nothing — the baseline signal is the
+        # store's emptiness, not a per-boot flag. With a per-boot flag this run
+        # would re-announce the whole catalogue (19k messages in the field).
+        check("clear_all wiped the store", real_seen.clear(), 3)
+        res = asyncio.run(app.run_source(fake))
+        check("cycle after a mid-run clear posts nothing", res["queued"], 0)
+        check("cycle after a mid-run clear re-recorded it",
+              real_seen.stats()["tracked"], 3)
+        res = asyncio.run(app.run_source(fake))
+        check("cycle after the re-baseline is back to quiet diffing",
+              res["queued"], 0)
+
         # main.py and run_forever() both call shutdown(); the second call must be
         # a no-op, or the queue is drained and the outbox written twice.
         asyncio.run(app.shutdown())

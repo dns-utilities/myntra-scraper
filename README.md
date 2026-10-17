@@ -225,6 +225,10 @@ DB means every qualifying product is *new* at once, and the first cycle is a
 wall of messages. The baseline is per source, so adding a source never re-posts
 the others.
 
+The trigger is the seen-DB's **emptiness at run time**, not a flag set once per
+boot. So `/clear_all` while the bot is already running is safe too: the next
+cycle re-baselines instead of re-announcing the catalogue.
+
 ## Multiple bots
 
 `BOT_TOKENS` takes several comma/newline-separated tokens. Token #1 is the
