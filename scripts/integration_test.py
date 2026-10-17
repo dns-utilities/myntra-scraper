@@ -36,7 +36,7 @@ class FakeSource:
     """Stands in for a real SourceAdapter, reusing the app's real SeenStore."""
 
     def __init__(self, app, name, products, links_count=3, seen_store=None):
-        from myntra_scraper.sources import SourceSpec
+        from dns_scraper.sources import SourceSpec
 
         self.name = name
         self._real_seen = seen_store
@@ -89,33 +89,42 @@ def build_app(tmp: Path):
     os.environ.update({
         "BOT_TOKENS": "123456:AA-fake-token-for-tests",
         "ADMIN_CHAT_ID": "42",
-        "CHANNEL_ALL": "-1001",
-        "CHANNEL_70PLUS": "-1002",
-        "CHANNEL_80PLUS": "-1003",
-        "CHANNEL_90PLUS": "-1004",
+        "CHANNEL_BASE_DEFAULT": "-1001",
+        "CHANNEL_TIER_70": "-1002",
+        "CHANNEL_TIER_80": "-1003",
+        "CHANNEL_TIER_90": "-1004",
         "DATA_DIR": str(tmp),
-        "CROMA_ENABLED": "false",
+        "SOURCE_CROMA_ENABLED": "false",
+        # Blinkit/BigBasket need the network and a location file; they have
+        # their own suite (qcommerce_test.py). Keeping them out here holds this
+        # test offline and to the pipeline it is actually about.
+        "SOURCE_BLINKIT_ENABLED": "false",
+        "SOURCE_BIGBASKET_ENABLED": "false",
+        # This suite asserts the *posting* path, so the empty-DB baseline
+        # (which deliberately posts nothing on the first cycle) is off.
+        # Baseline behaviour is covered by qcommerce_test.py.
+        "BASELINE_ON_EMPTY": "false",
         "AUTO_CLEAR_HOURS": "24",
         "AUTO_CLEAR_MIN_DISCOUNT": "50",
     })
     for key in ("SOURCE_MYNTRA_RPS", "SOURCE_CROMA_RPS"):
         os.environ.pop(key, None)
-    from myntra_scraper.app import ScraperApp
-    from myntra_scraper.config import Settings
+    from dns_scraper.app import ScraperApp
+    from dns_scraper.config import Settings
 
     settings = Settings.load()
     return ScraperApp(settings), settings
 
 
 def product(pid, brand, title, price, mrp, discount, source="myntra"):
-    from myntra_scraper.models import Product
+    from dns_scraper.models import Product
     return Product(product_id=pid, brand=brand, title=title, price=price,
                    mrp=mrp, discount=discount, source=source,
                    url="https://www.myntra.com/%s" % pid)
 
 
 async def main() -> int:
-    from myntra_scraper.models import Product
+    from dns_scraper.models import Product
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp = Path(tmpdir)

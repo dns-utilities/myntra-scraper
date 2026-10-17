@@ -6,8 +6,8 @@ each channel and prints a matrix, so you know exactly which pairings need an
 admin promotion instead of guessing from missing messages.
 
 Reads the same env vars as the app:
-    BOT_TOKENS, CHANNEL_ALL, CHANNEL_MYNTRA, CHANNEL_CROMA,
-    CHANNEL_70PLUS, CHANNEL_80PLUS, CHANNEL_90PLUS
+    BOT_TOKENS, CHANNEL_BASE_DEFAULT, CHANNEL_BASE_<NAME>,
+    CHANNEL_TIER_70, CHANNEL_TIER_80, CHANNEL_TIER_90
 
 Usage (from the project root, with your real tokens in the environment):
     python scripts/verify_bots.py
@@ -27,9 +27,11 @@ try:
 except Exception:
     pass
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+
 import requests
 
-CHANNEL_KEYS = ("all", "myntra", "croma", "70plus", "80plus", "90plus")
+from dns_scraper.channels import ChannelPlan
 
 
 def load_dotenv() -> None:
@@ -63,20 +65,10 @@ def main() -> int:
         print("No BOT_TOKENS found. Put them in .env or export them.")
         return 1
 
-    chats: list[tuple[str, int]] = []
-    for key in CHANNEL_KEYS:
-        val = os.environ.get("CHANNEL_%s" % key.upper(), "").strip()
-        if not val:
-            continue
-        try:
-            cid = int(val)
-        except ValueError:
-            print("CHANNEL_%s is not a number: %r" % (key.upper(), val))
-            return 1
-        if cid and cid not in [c for _, c in chats]:
-            chats.append((key, cid))
+    plan = ChannelPlan.from_env(os.environ)
+    chats = [(label, cid) for cid, label in sorted(plan.labels().items())]
     if not chats:
-        print("No CHANNEL_* vars found — nothing to verify.")
+        print("No CHANNEL_BASE_* / CHANNEL_TIER_* vars found — nothing to verify.")
         return 1
 
     print("Checking %d bot(s) against %d channel(s)\n" % (len(tokens), len(chats)))

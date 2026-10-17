@@ -20,7 +20,7 @@ import re
 import threading
 from pathlib import Path
 
-log = logging.getLogger("myntra_scraper.brand_registry")
+log = logging.getLogger("dns_scraper.brand_registry")
 
 # Title words considered when the brand field is empty/unknown. Registry
 # brands are title-leads, so the first few words carry the brand.

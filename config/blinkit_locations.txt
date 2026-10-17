@@ -1,0 +1,26 @@
+# ============================================================
+# BLINKIT - DELIVERY POINTS
+# One point per line. A '#' line is a comment.
+#
+# Blinkit has no store ids: it picks the dark store from the coordinate you
+# claim to be at, so a point is simply a coordinate. Two forms:
+#
+#   raw :  latitude | longitude | name
+#   pin :  pin:132103 | Panipat
+#
+# A 'pin:' line is resolved to a coordinate ONCE and then cached in
+# data/pincode_cache.json on the volume, so the lookup cost is paid a
+# single time. Get exact coordinates from Google Maps (right-click the
+# spot -> copy) when you want a specific store rather than the pincode
+# centre.
+#
+# Every point is scanned in parallel, so each one is a full extra pass over
+# every term in blinkit_links.txt. Keep the list short.
+# ============================================================
+
+# Your test point. Resolves automatically and is cached on first boot.
+pin:132103 | Panipat
+
+# --- Examples (commented). Uncomment and edit to add more points. ---
+# 17.4027233 | 78.3773127 | HYD-Manikonda
+# pin:134114 | Ambala

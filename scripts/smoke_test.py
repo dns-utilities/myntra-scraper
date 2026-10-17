@@ -8,8 +8,6 @@ from __future__ import annotations
 import json
 import sys
 import tempfile
-import threading as _threading
-from collections import deque
 from pathlib import Path
 
 # Windows consoles default to cp1252, which cannot encode the deal emoji.
@@ -20,12 +18,13 @@ except Exception:
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from myntra_scraper.brand_registry import BrandRegistry, normalize
-from myntra_scraper.deal_buttons import (deal_keyboard, confirm_keyboard,
+from dns_scraper.brand_registry import BrandRegistry, normalize
+from dns_scraper.channels import ChannelPlan
+from dns_scraper.deal_buttons import (deal_keyboard, confirm_keyboard,
                                          extract_product_id, parse_deal_message)
-from myntra_scraper.models import DiscountTier, Product
-from myntra_scraper.notifier import DealNotifier
-from myntra_scraper.stores import AutoClearPolicy, BlacklistStore, SeenStore
+from dns_scraper.models import DiscountTier, Product
+from dns_scraper.notifier import DealNotifier
+from dns_scraper.stores import AutoClearPolicy, BlacklistStore, SeenStore
 
 FAILS: list[str] = []
 
@@ -38,35 +37,21 @@ def check(label: str, got, want) -> None:
 
 
 # -- tiers ------------------------------------------------------------------
-check("tier 65", DiscountTier.for_discount(65).name, "STANDARD")
-check("tier 70", DiscountTier.for_discount(70).name, "HOT")
-check("tier 79", DiscountTier.for_discount(79).name, "HOT")
-check("tier 80", DiscountTier.for_discount(80).name, "DEEP")
-check("tier 89", DiscountTier.for_discount(89).name, "DEEP")
-check("tier 90", DiscountTier.for_discount(90).name, "JACKPOT")
+check("tier 65", DiscountTier.for_discount(65).name, "BASE")
+check("tier 70", DiscountTier.for_discount(70).name, "TIER_70")
+check("tier 79", DiscountTier.for_discount(79).name, "TIER_70")
+check("tier 80", DiscountTier.for_discount(80).name, "TIER_80")
+check("tier 89", DiscountTier.for_discount(89).name, "TIER_80")
+check("tier 90", DiscountTier.for_discount(90).name, "TIER_90")
+check("tier 100", DiscountTier.for_discount(100).name, "TIER_90")
 
-channels = {"all": -100, "myntra": -200, "croma": -300,
-            "70plus": -170, "80plus": -180, "90plus": -190}
+plan = ChannelPlan(bases={"default": -100, "myntra": -200, "croma": -300},
+                   tiers={70: -170, 80: -180, 90: -190})
 
-
-class FakeNotifier(DealNotifier):
-    def __init__(self):  # bypass worker threads
-        self._channels = channels
-        self._affiliate = ""
-        self._tokens = ["t1"]
-        self._last_bot = {}
-        self._last_global = 0.0
-        self._queue = deque()  # type: ignore[var-annotated]
-        self._bot_chat_blocked = set()
-        self._bot_chat_fails = {}
-        import threading as _t
-        self._stats_lock = _threading.Lock()
-
-
-n = FakeNotifier()
+n = DealNotifier([], plan, "")     # no tokens -> no worker threads
 check("route 65 myntra", n.route(65, "myntra"), [-200])       # base, per source
 check("route 65 croma", n.route(65, "croma"), [-300])
-check("route 65 unknown source", n.route(65, "blinkit"), [-100])  # falls back to ALL
+check("route 65 unknown source", n.route(65, "blinkit"), [-100])  # default base
 check("route 75", n.route(75, "myntra"), [-170])               # tier only
 check("route 85", n.route(85, "myntra"), [-180])
 check("route 95", n.route(95, "croma"), [-190])
@@ -82,13 +67,15 @@ for d in range(0, 101):
         FAILS.append("route(%d, myntra) leaked base or wrong tier: %r" % (d, got))
 check("no tier/base leakage 0-100", [f for f in FAILS if "leaked" in f], [])
 
-# unset tiers falling back must not double-post
-fallback = {"all": -100, "myntra": -100, "croma": -100,
-            "70plus": -100, "80plus": -100, "90plus": -100}
-m = FakeNotifier()
-m._channels = fallback
-check("no dup when everything = ALL", m.route(85, "myntra"), [-100])
+# A one-channel deployment (everything inheriting the default base) must not
+# post twice to that channel.
+single = ChannelPlan(bases={"default": -100, "myntra": -100, "croma": -100},
+                     tiers={70: -100, 80: -100, 90: -100})
+m = DealNotifier([], single, "")
+check("no dup when every destination is one chat", m.route(85, "myntra"), [-100])
 check("base dedup myntra", m.route(65, "myntra"), [-100])
+check("distinct destinations", single.destinations(), [-100])
+check("labels collapse to one", single.labels(), {-100: "base:default"})
 
 # -- message format ---------------------------------------------------------
 p = Product(product_id="ABC123", brand="Titan", title="Raga Watch For Women",

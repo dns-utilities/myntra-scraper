@@ -9,7 +9,7 @@ from datetime import datetime
 
 from curl_cffi import requests as cf_requests
 
-log = logging.getLogger("myntra_scraper.token_manager")
+log = logging.getLogger("dns_scraper.token_manager")
 
 AUTH_URL = "https://api.myntra.com/auth/v1/token"
 TOKEN_TTL_MINUTES = 25

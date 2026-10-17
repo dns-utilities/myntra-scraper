@@ -1,0 +1,94 @@
+# ============================================================
+# BLINKIT - SEARCH TERMS
+# One term per line. A '#' line is a comment.
+#
+# Anything Blinkit's own search box understands works here, so a bare
+# keyword is the normal case. A full search URL is also accepted and the
+# q= value is used.
+#
+# Politeness note: every term is paginated at EVERY delivery point in
+# blinkit_locations.txt, so the run length is (terms x points). Trim this
+# list to the categories you actually care about.
+# ============================================================
+
+# --- Atta, Rice, Oil & Dals ---
+atta
+rice
+oil
+dal
+besan
+sugar
+salt
+
+# --- Masala & Dry Fruits ---
+masala
+spices
+dry fruits
+almonds
+cashew
+
+# --- Sweet Cravings ---
+chocolate
+sweets
+candy
+
+# --- Frozen Food & Ice Creams ---
+ice cream
+frozen food
+
+# --- Baby Food ---
+baby food
+cerelac
+
+# --- Dairy, Bread & Eggs ---
+milk
+bread
+eggs
+curd
+paneer
+
+# --- Snacks ---
+chips
+namkeen
+snacks
+
+# --- Breakfast & Sauces ---
+honey
+
+# --- Tea, Coffee & More ---
+tea
+coffee
+green tea
+
+# --- Makeup & Beauty ---
+makeup
+lipstick
+kajal
+
+# --- Bath & Body ---
+soap
+body wash
+shampoo
+
+# --- Cleaning Essentials ---
+detergent
+floor cleaner
+dishwash
+toilet cleaner
+
+# --- Home Needs ---
+tissue
+garbage bag
+mosquito
+
+# --- Electricals ---
+juicer mixer grinder
+electric kettle
+toaster
+coffee maker
+
+# --- Hygiene & Grooming ---
+toothpaste
+
+# --- Health & Baby Care ---
+diaper l size

@@ -14,7 +14,7 @@ from pathlib import Path
 
 from curl_cffi import requests as cf_requests
 
-log = logging.getLogger("myntra_scraper.croma_stores")
+log = logging.getLogger("dns_scraper.croma_stores")
 
 STORE_API_URL = ("https://api.croma.com/lookup/mobile-app/v1/storelocation"
                  "?pageSize=500&sort=asc&fields=FULL")

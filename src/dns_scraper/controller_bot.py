@@ -17,15 +17,15 @@ from typing import TYPE_CHECKING
 
 import requests
 
-from myntra_scraper.deal_buttons import DealButtonHandler, extract_product_id
+from dns_scraper.deal_buttons import DealButtonHandler, extract_product_id
 
 if TYPE_CHECKING:
-    from myntra_scraper.app import ScraperApp
+    from dns_scraper.app import ScraperApp
 
-log = logging.getLogger("myntra_scraper.controller")
+log = logging.getLogger("dns_scraper.controller")
 
 HELP_TEXT = (
-    "Myntra + Croma deal scraper controls:\n"
+    "dns-scraper controls — Myntra + Croma + Blinkit + BigBasket:\n"
     "/start — start scraping\n"
     "/stop — stop scraping\n"
     "/status — live stats per source\n"
@@ -34,9 +34,12 @@ HELP_TEXT = (
     "/affiliate — show current link tag (OFF = clean links)\n"
     "/set_affiliate <query> — set tag, e.g. /set_affiliate utm_source=x&utm_campaign=y\n"
     "/clear_affiliate — back to clean links\n"
-    "/add_link <url> — track a Myntra OR Croma URL (auto-detected)\n"
+    "/add_link <url> — track a Myntra/Croma/Blinkit/BigBasket URL (auto-detected)\n"
+    "/add_link <source>:<term> — track a search term, e.g. /add_link blinkit:atta\n"
     "/remove_link <url or number> — untrack\n"
-    "/list_links — tracked URLs (Myntra + Croma)\n"
+    "/list_links — tracked URLs/terms per source\n"
+    "/add_location <source> <line> — add a delivery point (Blinkit/BigBasket)\n"
+    "/list_locations — delivery points each source is priced at\n"
     "/croma_stores — refresh Croma store-name map\n"
     "/stock <product_id> — which Croma stores carry it\n"
     "/add_blacklist <brand> <min_%> — skip brand below % (e.g. /add_blacklist Nike 60)\n"
@@ -56,7 +59,11 @@ HELP_TEXT = (
     "/help — this message\n"
     "\n"
     "Deal messages carry two buttons: 🚫 Blacklist Product (exact price only) "
-    "and 🏷️ Blacklist Brand (asks for a %, then confirms)."
+    "and 🏷️ Blacklist Brand (asks for a %, then confirms).\n"
+    "\n"
+    "Blinkit/BigBasket are priced per delivery point, so a deal's footer shows "
+    "which point it came from. Posting is paced to Telegram's limits: at most "
+    "~18 messages/min per channel and ~20/s overall."
 )
 
 
@@ -144,28 +151,52 @@ class ControllerBot:
                                     app.croma_stores.resolve_codes(row["store_codes"]))
         if low.startswith("/add_link") or cmd.startswith("ADD#"):
             url = cmd.split(None, 1)[1].strip() if " " in cmd else cmd[4:].strip()
-            if not url.startswith("http"):
-                return "Only http(s) URLs allowed."
-            # Auto-route by domain: Croma -> croma store, else Myntra.
-            if "croma.com" in url:
-                store = app.croma_links
-                ok = store.add(url) if store else False
-                return ("Croma link added. Total: %d" % len(store.all())
+            if not url:
+                return "Usage: /add_link <url>  or  /add_link <source>:<term>"
+            # "<source>:<term>" tracks a bare search term. Q-commerce sources
+            # are keyword-driven, so a term is the natural unit there.
+            if "://" not in url and ":" in url:
+                name, _, term = url.partition(":")
+                name, term = name.strip().lower(), term.strip()
+                source = app.source(name)
+                if not source or not term:
+                    return "Unknown source '%s'. Try: %s" % (
+                        name, ", ".join(app.source_names()) or "none")
+                store = source.links()
+                ok = store.add(term)
+                return ("%s term added. Total: %d"
+                        % (source.spec.label, len(store.all()))
                         if ok else "Already tracked.")
+            if not url.startswith("http"):
+                return "Only http(s) URLs (or <source>:<term>) allowed."
+            # Auto-route by domain.
+            for host, name in (("croma.com", "croma"), ("blinkit.com", "blinkit"),
+                               ("bigbasket.com", "bigbasket")):
+                if host in url:
+                    source = app.source(name)
+                    if not source:
+                        return "%s is not enabled in this deployment." % name
+                    store = source.links()
+                    ok = store.add(url)
+                    return ("%s link added. Total: %d"
+                            % (source.spec.label, len(store.all()))
+                            if ok else "Already tracked.")
             if "myntra.com" not in url:
-                return "Only Myntra or Croma URLs allowed."
+                return "Only Myntra, Croma, Blinkit or BigBasket URLs allowed."
             ok = app.links.add(url)
             return ("Link added. Total: %d" % len(app.links.all())
                     if ok else "Already tracked.")
         if low.startswith("/remove_link") or cmd.startswith("REMOVE#"):
             key = cmd.split(None, 1)[1].strip() if " " in cmd else cmd[7:].strip()
-            if "croma.com" in key and app.croma_links:
-                return "Removed." if app.croma_links.remove(key) else "Not found. See /list_links."
-            if app.links and app.links.remove(key):
-                return "Removed."
-            if app.croma_links and app.croma_links.remove(key):
-                return "Removed."
+            for source in app.sources:
+                store = source.links()
+                if store and store.remove(key):
+                    return "Removed from %s." % source.spec.label
             return "Not found. See /list_links."
+        if low.startswith("/list_locations"):
+            return self._list_locations()
+        if low.startswith("/add_location"):
+            return self._add_location(cmd)
         if low.startswith("/list_blacklist"):
             rules = app.blacklist.all()
             if not rules:
@@ -246,6 +277,57 @@ class ControllerBot:
                 lines.append("  ...and %d more" % (len(urls) - 20))
         return "\n".join(lines)
 
+    def _list_locations(self) -> str:
+        app = self._app
+        lines = []
+        for source in app.sources:
+            points = getattr(source, "points", None)
+            if points is None:
+                continue
+            spec = source.spec
+            name = spec.locations_file.name if spec.locations_file else "?"
+            lines.append("%s (%d) from %s:" % (source.spec.label, len(points), name))
+            if not points.all():
+                lines.append("  (none resolved — add one: /add_location %s <line>)"
+                             % source.name)
+                continue
+            for point in points.all():
+                lines.append("  %s -> %s" % (point.label, point.key))
+        return "\n".join(lines) or "No location-scoped sources enabled."
+
+    def _add_location(self, cmd: str) -> str:
+        app = self._app
+        parts = cmd.split(None, 2)
+        if len(parts) < 3:
+            return ("Usage: /add_location <source> <line>\n"
+                    "  /add_location blinkit 17.4027233|78.3773127|HYD-Manikonda\n"
+                    "  /add_location blinkit pin:132103|Panipat\n"
+                    "  /add_location bigbasket 10|0|1|Hyderabad-bbnow")
+        name = parts[1].strip().lower()
+        source = app.source(name)
+        if source is None or getattr(source, "points", None) is None:
+            available = ", ".join(s.name for s in app.sources
+                                  if getattr(s, "points", None) is not None)
+            return "No location-scoped source '%s'. Available: %s" % (
+                name, available or "none")
+        spec = source.spec
+        if not spec.locations_file:
+            return "Source %s has no location file." % name
+        line = parts[2].strip()
+        try:
+            spec.locations_file.parent.mkdir(parents=True, exist_ok=True)
+            with spec.locations_file.open("a", encoding="utf-8") as handle:
+                handle.write("\n%s\n" % line)
+        except OSError as exc:
+            return "Write failed: %s" % exc
+        count = source.reload_points()
+        note = ""
+        if not count:
+            note = ("\nNothing resolved yet — the file's header explains the "
+                    "exact format this source needs.")
+        return ("Added `%s` to %s. %d point(s) now active for %s.%s"
+                % (line, spec.locations_file.name, count, source.spec.label, note))
+
     def _diag(self, cmd: str) -> str:
         app = self._app
         parts = cmd.split()
@@ -257,11 +339,11 @@ class ControllerBot:
         lines = []
         for source in targets:
             st = source.stats()
-            lines.append("%s: req=%d ok=%d err=%d (403=%d 429=%d) runs=%d items=%d"
+            lines.append("%s: req=%d ok=%d err=%d (403=%d 429=%d aborted=%d) runs=%d items=%d"
                          % (source.spec.label, st.get("requests", 0), st.get("success", 0),
                             st.get("errors", 0), st.get("forbidden", 0),
-                            st.get("rate_limited", 0), st.get("runs", 0),
-                            st.get("items", 0)))
+                            st.get("rate_limited", 0), st.get("aborted_runs", 0),
+                            st.get("runs", 0), st.get("items", 0)))
             lines.append("  state: %s | last run %.1fs | last error: %s"
                          % ("PARKED %.0fs" % st.get("cooldown", 0) if st.get("open") else "ok",
                             st.get("last_duration", 0.0), st.get("last_error") or "none"))
@@ -370,10 +452,8 @@ class ControllerBot:
         tokens = [t for t in app.settings.bot_tokens if t]
         if not tokens:
             return "No BOT_TOKENS configured."
-        chats: list[tuple[str, int]] = []
-        for name, cid in app.settings.channels.items():
-            if cid and cid not in [c for _, c in chats]:
-                chats.append((name, cid))
+        chats = [(label, cid)
+                 for cid, label in sorted(app.settings.channel_plan.labels().items())]
         if not chats:
             return "No channels configured."
         lines = ["Bot / channel matrix (%d bots x %d channels):"
@@ -408,9 +488,10 @@ class ControllerBot:
     def _loop(self, token: str, primary: bool) -> None:
         label = "control" if primary else token[-6:]
         log.info("Telegram poller [%s] started (admin=%d, watching %d deal chats)",
-                 label, self._admin, len(set(self._app.settings.channels.values())))
+                 label, self._admin,
+                 len(set(self._app.settings.channel_plan.destinations())))
         errors = 0
-        deal_chats = set(self._app.settings.channels.values())
+        deal_chats = set(self._app.settings.channel_plan.destinations())
         while self._running:
             try:
                 if errors >= 5:

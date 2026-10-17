@@ -1,0 +1,39 @@
+# ============================================================
+# BIGBASKET - DELIVERY POINTS
+# One point per line. A '#' line is a comment.
+#
+# BigBasket prices per "service area", not per coordinate, so a point is a
+# triple rather than a lat/lon:
+#
+#   raw :  ec_id | sa_id | city_id | name
+#   pin :  pin:134114 | Ambala
+#
+#   ec_id    x-entry-context-id   (10 = bbnow, the quick/express context)
+#   sa_id    the service-area id for your address
+#   city_id  the city id for your address
+#
+# HOW TO GET YOUR OWN  (this is the only manual step)
+#   1. Open bigbasket.com in a desktop browser, set your delivery pincode.
+#   2. DevTools -> Network -> filter "listing-svc".
+#   3. On any product request, read these headers:
+#        x-entry-context-id  -> ec_id
+#        x-sa-id             -> sa_id
+#        x-city-id           -> city_id
+#   4. Add a line below. No restart needed: the file is re-read each cycle.
+#
+# 'pin:' lines are NOT auto-resolved for BigBasket -- there is no public
+# pincode -> service-area lookup, so guessing would silently return another
+# city's prices. To make a pin line work, add it by hand to
+# data/pincode_cache.json:
+#   { "bigbasket": { "134114": { "key": "10:0", "label": "Ambala",
+#                                "ec_id": "10", "sa_id": "<sa>",
+#                                "city_id": "<city>" } } }
+# ============================================================
+
+# Known-good default (bbnow entry context, Hyderabad city). Replace with
+# your own line from the steps above -- the footer of every deal shows
+# which point it came from, so a wrong city is always visible.
+10 | 0 | 1 | Hyderabad-bbnow
+
+# --- Your test point (needs the manual context above). ---
+# pin:134114 | Ambala

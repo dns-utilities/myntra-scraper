@@ -9,11 +9,11 @@ import threading
 
 from curl_cffi.requests import AsyncSession
 
-from myntra_scraper.models import Product
-from myntra_scraper.search_api import ROWS_PER_PAGE, build_api_request, parse_search_url
-from myntra_scraper.token_manager import TokenManager
+from dns_scraper.models import Product
+from dns_scraper.search_api import ROWS_PER_PAGE, build_api_request, parse_search_url
+from dns_scraper.token_manager import TokenManager
 
-log = logging.getLogger("myntra_scraper.scraper")
+log = logging.getLogger("dns_scraper.scraper")
 
 
 class MyntraScraper:

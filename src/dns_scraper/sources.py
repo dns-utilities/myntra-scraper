@@ -3,8 +3,10 @@
 Everything site-specific lives behind a ``SourceAdapter``: how URLs are turned
 into ``Product`` objects, where the links/seen-state live, how fast it is
 allowed to talk, and how often. The pipeline in ``app.py`` is source-agnostic,
-so adding Blinkit/Zepto/Instamart later is a new adapter plus env vars — not a
-rewrite (see ``docs/FUTURE-SOURCES.md``).
+so adding Zepto/Instamart later is a new adapter plus env vars — not a rewrite
+(see ``docs/FUTURE-SOURCES.md``). Myntra and Croma price nationally; Blinkit and
+BigBasket are *hyper-local*, so they also carry a list of delivery points (see
+``locations.py``) and the location becomes part of the seen-key.
 
 Two safeguards exist because the pipeline runs unattended for weeks:
 
@@ -25,11 +27,12 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 
-from myntra_scraper.config import Settings
-from myntra_scraper.models import Product
-from myntra_scraper.stores import LinkStore, SeenStore
+from dns_scraper.config import Settings
+from dns_scraper.locations import LocationSet, PincodeCache, build_location_set
+from dns_scraper.models import Product
+from dns_scraper.stores import LinkStore, SeenStore
 
-log = logging.getLogger("myntra_scraper.sources")
+log = logging.getLogger("dns_scraper.sources")
 
 
 @dataclass
@@ -43,16 +46,27 @@ class SourceSpec:
     # Location the prices are observed at. "" for a single national price;
     # a pincode/store id makes the seen-key location-scoped.
     default_location: str = ""
+    # Hyper-local sources (Blinkit, BigBasket) are priced per delivery point
+    # and carry their own list of points. None for nationally-priced sources.
+    locations_file: Path | None = None
     # 0 = run every scheduler tick (legacy behaviour). Otherwise minimum
     # seconds between runs, so slow-moving sources can be polled daily.
     interval: int = 0
     rps: float = 5.0            # per-source request budget
-    timeout: int = 20
     enabled: bool = True
     min_discount_new: int = 0
     min_discount_existing: int = 15
     max_pages: int = 5
     concurrency: int = 8
+    # curl_cffi browser profile. Must match the UA family the scraper sends,
+    # or the TLS fingerprint and the headers disagree.
+    impersonate: str = ""
+    # Site-specific knobs. Each is read only by the source that has one.
+    page_limit: int = 0         # Blinkit: items per request
+    cooldown: int = 0           # q-commerce: seconds parked after 429/403
+    cookie_ttl: int = 600       # BigBasket: seconds before a cookie re-warm
+    warm_cookies: bool = True   # Blinkit: fetch a homepage session first
+    channel_code: str = ""      # Croma: sales-channel code in the category API
 
     def apply_overrides(self, overrides: dict) -> "SourceSpec":
         for key, value in (overrides or {}).items():
@@ -221,6 +235,10 @@ class SourceAdapter(ABC):
         """HTTP-level counters, if the underlying client keeps any."""
         return {}
 
+    def reload_points(self) -> int:
+        """Re-read delivery points from disk. No-op for national sources."""
+        return 0
+
     def stats(self) -> dict:
         out = dict(self.scraper_stats())
         out.update(self.health.snapshot())
@@ -237,14 +255,13 @@ class MyntraSource(SourceAdapter):
 
     def __init__(self, spec: SourceSpec, settings: Settings) -> None:
         super().__init__(spec)
-        from myntra_scraper.scraper import MyntraScraper
-        from myntra_scraper.token_manager import TokenManager
+        from dns_scraper.scraper import MyntraScraper
+        from dns_scraper.token_manager import TokenManager
 
-        self._tokens = TokenManager(settings.curl_impersonate)
+        self._tokens = TokenManager(spec.impersonate)
         self._scraper = MyntraScraper(
-            self._tokens, settings.curl_impersonate, settings.pincode,
-            self.spec.concurrency, self.spec.max_pages, rate_limiter=self._limiter)
-        self._pincode = settings.pincode
+            self._tokens, spec.impersonate, spec.default_location,
+            spec.concurrency, spec.max_pages, rate_limiter=self._limiter)
 
     @property
     def tokens(self):
@@ -253,12 +270,8 @@ class MyntraSource(SourceAdapter):
     async def scrape_all(self, urls: list[str]) -> list[Product]:
         return await self._scraper.scrape_all(urls)
 
-    def location_for(self, product: Product) -> str:
-        # Myntra pricing follows the delivery pincode.
-        return product.location or self._pincode
-
     def diag(self) -> str:
-        from myntra_scraper.search_api import build_api_request, parse_search_url
+        from dns_scraper.search_api import build_api_request, parse_search_url
         token = self._tokens.get_token(force_refresh=True)
         if not token:
             return "diag[myntra]: token fetch FAILED (network / impersonation)"
@@ -278,12 +291,10 @@ class CromaSource(SourceAdapter):
 
     def __init__(self, spec: SourceSpec, settings: Settings) -> None:
         super().__init__(spec)
-        from myntra_scraper.croma_scraper import CromaScraper
+        from dns_scraper.croma_scraper import CromaScraper
 
-        self._scraper = CromaScraper(settings.croma_impersonate,
-                                     self.spec.concurrency, self.spec.max_pages,
-                                     settings.croma_channel_code,
-                                     rate_limiter=self._limiter)
+        self._scraper = CromaScraper(spec.impersonate, spec.concurrency, spec.max_pages,
+                                     spec.channel_code, rate_limiter=self._limiter)
 
     async def scrape_all(self, urls: list[str]) -> list[Product]:
         return await self._scraper.scrape_all(urls)
@@ -292,9 +303,103 @@ class CromaSource(SourceAdapter):
         return dict(self._scraper.stats())
 
 
+def _load_points(spec: SourceSpec, settings: Settings, kind: str) -> LocationSet:
+    """Resolve a source's delivery points, caching pincode lookups on the volume."""
+    lines: list[str] = []
+    if spec.locations_file and spec.locations_file.exists():
+        lines = spec.locations_file.read_text(encoding="utf-8").splitlines()
+    cache = PincodeCache(settings.pincode_cache_file)
+    points = build_location_set(kind, lines, cache,
+                                geocode=settings.geocode_enabled,
+                                geocode_url=settings.geocode_url)
+    if not points.all():
+        log.warning("Source %s: no delivery points resolved from %s",
+                    spec.name, spec.locations_file)
+    return points
+
+
+class BlinkitSource(SourceAdapter):
+    """Blinkit's internal search endpoint. No auth; location is everything.
+
+    Every price is a dark-store price, so one scrape covers every delivery
+    point and each product carries the point it was seen at. ``scrape_all``
+    therefore takes the resolved points, not the bare links.
+    """
+
+    def __init__(self, spec: SourceSpec, settings: Settings) -> None:
+        super().__init__(spec)
+        from dns_scraper.blinkit_scraper import BlinkitScraper
+
+        self._settings = settings
+        self.points = _load_points(spec, settings, "blinkit")
+        self._scraper = BlinkitScraper(
+            spec.impersonate, spec.concurrency, spec.max_pages,
+            spec.page_limit, rate_limiter=self._limiter,
+            cooldown_seconds=spec.cooldown,
+            warm_cookies=spec.warm_cookies)
+
+    async def scrape_all(self, urls: list[str]) -> list[Product]:
+        return await self._scraper.scrape_all(urls, self.points.all())
+
+    def reload_points(self) -> int:
+        self.points = _load_points(self.spec, self._settings, "blinkit")
+        return len(self.points)
+
+    def scraper_stats(self) -> dict:
+        stats = dict(self._scraper.stats())
+        stats["points"] = len(self.points)
+        return stats
+
+    def diag(self) -> str:
+        if not self.points.all():
+            return ("diag[blinkit]: NO delivery points resolved — add a line to "
+                    "config/blinkit_locations.txt or use /add_location")
+        return "diag[blinkit]: %d point(s) | %s" % (len(self.points), self.points.describe())
+
+
+class BigBasketSource(SourceAdapter):
+    """BigBasket's listing API. No auth, but cookies need periodic re-warm."""
+
+    def __init__(self, spec: SourceSpec, settings: Settings) -> None:
+        super().__init__(spec)
+        from dns_scraper.bigbasket_scraper import BigBasketScraper
+
+        self._settings = settings
+        self.points = _load_points(spec, settings, "bigbasket")
+        self._scraper = BigBasketScraper(
+            spec.impersonate, spec.concurrency, spec.max_pages,
+            rate_limiter=self._limiter,
+            cooldown_seconds=spec.cooldown,
+            cookie_ttl=spec.cookie_ttl)
+
+    async def scrape_all(self, urls: list[str]) -> list[Product]:
+        return await self._scraper.scrape_all(urls, self.points.all())
+
+    def reload_points(self) -> int:
+        self.points = _load_points(self.spec, self._settings, "bigbasket")
+        return len(self.points)
+
+    def scraper_stats(self) -> dict:
+        stats = dict(self._scraper.stats())
+        stats["points"] = len(self.points)
+        return stats
+
+    def diag(self) -> str:
+        if not self.points.all():
+            return ("diag[bigbasket]: NO delivery points resolved — add a line to "
+                    "config/bigbasket_locations.txt or use /add_location")
+        return ("diag[bigbasket]: %d point(s) | %s"
+                % (len(self.points), self.points.describe()))
+
+
 # -- assembly ---------------------------------------------------------------
 def build_sources(settings: Settings) -> list[SourceAdapter]:
-    """Instantiate the enabled sources declared for this deployment."""
+    """Instantiate the enabled sources declared for this deployment.
+
+    Per-site defaults live here (the one place that already knows about every
+    site) and every field is overridable with ``SOURCE_<NAME>_<FIELD>``, so
+    tuning a source never means editing ``Settings``.
+    """
     overrides = settings.source_overrides or {}
     specs = [
         SourceSpec(
@@ -303,22 +408,40 @@ def build_sources(settings: Settings) -> list[SourceAdapter]:
             default_location=settings.pincode,
             interval=0, rps=5.0, max_pages=settings.max_pages_per_url,
             concurrency=settings.scrape_concurrency,
+            impersonate="chrome131_android",
             min_discount_new=settings.min_discount_new,
             min_discount_existing=settings.min_discount_existing,
-        ).apply_overrides(overrides.get("myntra")),
+        ),
         SourceSpec(
             name="croma", label="Croma",
             links_file=settings.croma_links_file, seen_db=settings.croma_seen_db,
             default_location="",
-            interval=0, rps=5.0, max_pages=settings.croma_max_pages,
-            concurrency=settings.croma_concurrency,
+            interval=0, rps=5.0, max_pages=10, concurrency=6,
+            impersonate="chrome120", channel_code="400049",
             min_discount_new=settings.min_discount_new,
             min_discount_existing=settings.min_discount_existing,
-        ).apply_overrides(overrides.get("croma")),
+        ),
+        SourceSpec(
+            name="blinkit", label="Blinkit",
+            links_file=settings.blinkit_links_file, seen_db=settings.blinkit_seen_db,
+            default_location="", locations_file=settings.blinkit_locations_file,
+            interval=0, rps=3.0, max_pages=6, concurrency=5,
+            impersonate="chrome124", page_limit=15, cooldown=20, warm_cookies=True,
+            min_discount_new=settings.min_discount_new,
+            min_discount_existing=settings.min_discount_existing,
+        ),
+        SourceSpec(
+            name="bigbasket", label="BigBasket",
+            links_file=settings.bigbasket_links_file, seen_db=settings.bigbasket_seen_db,
+            default_location="", locations_file=settings.bigbasket_locations_file,
+            interval=0, rps=4.0, max_pages=5, concurrency=8,
+            impersonate="chrome", cooldown=25, cookie_ttl=600,
+            min_discount_new=settings.min_discount_new,
+            min_discount_existing=settings.min_discount_existing,
+        ),
     ]
-    if not settings.croma_enabled:
-        specs = [s for s in specs if s.name != "croma"]
     for spec in specs:
+        spec.apply_overrides(overrides.get(spec.name))
         if spec.enabled:
             log.info("Source %s: interval=%s rps=%s pages=%s conc=%s location=%r",
                      spec.name, spec.interval or "per-tick", spec.rps,
@@ -326,4 +449,5 @@ def build_sources(settings: Settings) -> list[SourceAdapter]:
     return [_ADAPTERS[s.name](s, settings) for s in specs if s.enabled]
 
 
-_ADAPTERS = {"myntra": MyntraSource, "croma": CromaSource}
+_ADAPTERS = {"myntra": MyntraSource, "croma": CromaSource,
+             "blinkit": BlinkitSource, "bigbasket": BigBasketSource}

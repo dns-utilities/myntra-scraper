@@ -1,0 +1,82 @@
+# ============================================================
+# BIGBASKET - CATEGORY SLUGS / SEARCH TERMS
+# One source per line. A '#' line is a comment.
+#
+#   category slug  ->  headphones              (default type=pc)
+#   search term    ->  search:atta
+#   a full URL     ->  https://www.bigbasket.com/pc/<id>/<slug>/
+#
+# The slugs below are the ones worth watching for a deal feed: electronics
+# and appliances, where a real price drop is large enough to matter. The
+# grocery search: lines at the bottom cover fast-moving staples.
+#
+# Every line is fetched at EVERY delivery point in
+# bigbasket_locations.txt, so run length is (lines x points).
+# ============================================================
+
+# --- Audio ---
+headphones
+speakers-soundbars
+wired-earphones
+
+# --- Electronics / Accessories (price errors show up here most) ---
+hard-disks-pendrives
+keyboard-mouse-webcam
+mobile-holders
+printers-ink
+smart-devices
+
+# --- Cameras ---
+camera-accessories
+security-cameras
+
+# --- Large Appliances ---
+acs-coolers
+air-purifiers
+ceiling-fans
+refrigerators
+washing-machines
+water-heaters
+water-purifiers
+room-heaters
+vacuum-cleaners
+
+# --- Kitchen Appliances ---
+blenders-choppers
+coffee-makers-kettles
+induction-stoves
+juicer-mixer-grinder
+microwaves-air-fryers
+rice-cooker-roti-maker
+toaster-boiler-yogurt-maker
+
+# --- Personal Care Appliances ---
+body-massagers
+electric-toothbrush
+epilators-trimmers
+hair-styling-accessories
+weighing-machine
+
+# --- Mobiles / Computing ---
+smartphones
+monitors
+
+# --- Home / Tools ---
+hand-tools
+irons
+portable-table-fans
+
+# --- Fashion ---
+belts
+
+# --- Grocery search (slugs drift; search: is stable) ---
+search:atta
+search:rice
+search:cooking oil
+search:dry fruits
+search:chocolate
+search:coffee
+search:protein
+search:shampoo
+search:detergent
+search:diaper

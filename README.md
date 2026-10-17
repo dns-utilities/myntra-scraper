@@ -1,48 +1,64 @@
-# Myntra + Croma Scraper — Telegram-controlled deal bot
+# dns-scraper — Myntra + Croma + Blinkit + BigBasket Telegram deal bot
 
-Clean rebuild of the Myntra deals scraper (with a full Telegram control bot),
-now running **both Myntra and Croma** as sibling sources in one deployment.
-One service, zero hardcoded secrets. Both sources share the same bot tokens,
-deal channels, up-only duplicate filter, spam/blacklist, and notifier.
+Clean rebuild of the deals scraper (with a full Telegram control bot), now
+running **four sources as siblings in one deployment**: Myntra and Croma
+priced nationally, Blinkit and BigBasket priced *per delivery point*. One
+service, zero hardcoded secrets. All sources share the same bot tokens, deal
+channels, up-only duplicate filter, spam/blacklist, and notifier — and the
+notifier paces every send to Telegram's real limits, so a burst (or a cleared
+database) drains steadily instead of flooding a channel.
 
 ## Architecture
 
 ```text
-myntra-scraper/
+dns-scraper/
 ├── main.py                      # entry point — wires config + app + shutdown
 ├── requirements.txt
 ├── .env.example                 # copy to .env, fill secrets
 ├── railway.json / .python-version
 ├── docs/
 │   ├── SCRAPING-GUIDELINES.md   # politeness, circuit breakers, retention, why
-│   └── FUTURE-SOURCES.md        # Blinkit/Zepto/Instamart plan + research
+│   └── FUTURE-SOURCES.md        # how to add a source + Zepto/Instamart notes
 ├── config/
 │   ├── links.txt                # Myntra seed URLs (copied to DATA_DIR on first boot)
 │   ├── croma_links.txt          # Croma seed category URLs (same seeding)
+│   ├── blinkit_links.txt        # Blinkit seed search terms (grocery)
+│   ├── bigbasket_links.txt      # BigBasket seed category slugs + searches
+│   ├── blinkit_locations.txt    # Blinkit delivery points (lat|lon, or pin:)
+│   ├── bigbasket_locations.txt  # BigBasket delivery points (ec|sa|city, or pin:)
 │   └── auto_clear_brands.json   # 617 evidenced brands (generated; see scripts/)
-└── src/myntra_scraper/
+└── src/dns_scraper/
     ├── __init__.py
     ├── config.py                # Settings dataclass — ALL secrets/env in one place
+    ├── channels.py              # ChannelPlan — base-vs-tier routing value object
     ├── logging_setup.py         # logging factory (no global side effects)
-    ├── models.py                # Product dataclass + DiscountTier (myntra | croma)
+    ├── models.py                # Product + DiscountTier + per-source parsers
     ├── token_manager.py         # Myntra /auth/v1/token (STABLE device + cookies)
     ├── search_api.py            # Myntra search URL parsing + request building
     ├── scraper.py               # Myntra API client (async bulk scrape)
-    ├── croma_api.py             # Croma category URL parsing + request building + headers
+    ├── croma_api.py             # Croma category URL parsing + request building
     ├── croma_scraper.py         # Croma API client (async bulk scrape)
-    ├── croma_stores.py          # CromaStoreMapper — SA-XXXX → store name/city (STOCK#)
-    ├── sources.py               # SourceAdapter / SourceSpec / SourceHealth / rate limiter
+    ├── croma_stores.py          # CromaStoreMapper — SA-XXXX → store name/city
+    ├── blinkit_api.py           # Blinkit layout/search request building + cards
+    ├── blinkit_scraper.py       # Blinkit client (per-point cookies, 429/403 gate)
+    ├── bigbasket_api.py         # BigBasket listing request building + products
+    ├── bigbasket_scraper.py     # BigBasket client (cookie TTL, 429/403 gate)
+    ├── locations.py             # delivery points + pincode cache/geocoding
+    ├── sources.py               # SourceAdapter / SourceSpec / SourceHealth / limiter
     ├── brand_registry.py        # auto-clear brand matching (aliases, longest-first)
     ├── deal_buttons.py          # inline keyboard, message parser, brand-prompt flow
     ├── stores.py                # LinkStore / SeenStore / BlacklistStore (SQLite)
-    ├── notifier.py              # multi-bot Telegram sender w/ rate limiting
-    ├── controller_bot.py        # control bot: /start /stop /status /diag + button pollers
+    ├── notifier.py              # multi-bot sender + 3-bucket send gate + outbox
+    ├── controller_bot.py        # control bot: /start /stop /status /diag + pollers
     └── app.py                   # ScraperApp — per-source scheduler + pipeline
 scripts/
     ├── build_auto_clear_brands.py  # regenerate the auto-clear list from the registry
     ├── smoke_test.py               # offline unit checks (tiers, seen, blacklist, buttons)
     ├── integration_test.py         # fake source through the real pipeline
-    └── button_test.py              # simulated Telegram callback round trip
+    ├── poller_test.py              # per-bot Telegram cursor isolation
+    ├── migration_check.py          # seen-DB schema migration from v1
+    ├── button_test.py              # simulated Telegram callback round trip
+    └── qcommerce_test.py           # Blinkit/BigBasket parsers, routing, send gate
 ```
 
 ### Naming conventions used
@@ -65,9 +81,12 @@ Sent to the **control bot** (token #1) in the admin chat:
 | `/status` | per-source cycles, uptime, queue, tracked, circuit state, 403/429 split |
 | `/diag [source]` | live probe + per-source health, request/error/empty counters |
 | `/run` | force one pass over every source now |
-| `/add_link <url>` | add a Myntra OR Croma URL (auto-detected by domain, persists to volume) |
+| `/add_link <url>` | add a Myntra / Croma / Blinkit / BigBasket URL (auto-detected by domain, persists to volume) |
+| `/add_link <source>:<term>` | add a bare search term, e.g. `/add_link blinkit:atta` |
 | `/remove_link <url-or-index>` | remove by URL or `LIST#` index |
-| `/list_links` | show tracked URLs (Myntra + Croma sections) |
+| `/list_links` | show tracked URLs/terms, grouped per source |
+| `/add_location <source> <line>` | add a delivery point, e.g. `/add_location blinkit pin:132103\|Panipat` |
+| `/list_locations` | delivery points each location-scoped source is priced at |
 | `/croma_stores` | refresh the Croma store-name map (for `/stock`) |
 | `/stock <croma_product_id>` | which Croma stores carry it (resolves SA-XXXX codes) |
 | `/add_blacklist <brand> <min_discount>` | e.g. `/add_blacklist Nike 60` — skip Nike below 60% |
@@ -110,6 +129,17 @@ Discount badge first, then title, then price/MRP, then link, then the source
 as a plain `App:` line at the bottom (with the location in parentheses for
 location-scoped sources). No source branding in the headline.
 
+Blinkit and BigBasket deals name the delivery point they were priced at:
+
+```
+🚨 80% Off - Raga Watch For Women
+
+💰 Price: ₹1299 (MRP: ₹6495)
+
+https://blinkit.com/prn/x/prid/98765
+
+App: Blinkit (Panipat)
+```
 ## Tier channels
 
 Every deal posts to **exactly one** channel family. Tier deals never also land
@@ -118,16 +148,76 @@ makes a base feed feel spammy.
 
 | Discount | Channel |
 |---|---|
-| `< 70%` | `CHANNEL_MYNTRA` or `CHANNEL_CROMA` (per source; falls back to `CHANNEL_ALL`) |
-| 70–79% | `CHANNEL_70PLUS` (shared by all sources) |
-| 80–89% | `CHANNEL_80PLUS` (shared by all sources) |
-| 90%+ | `CHANNEL_90PLUS` (shared by all sources) |
+| `< 70%` | the deal's own base: `CHANNEL_BASE_MYNTRA` / `CHANNEL_BASE_CROMA` / `CHANNEL_BASE_BLINKIT` / `CHANNEL_BASE_BIGBASKET` (falls back to `CHANNEL_BASE_DEFAULT`) |
+| 70–79% | `CHANNEL_TIER_70` (shared by all sources) |
+| 80–89% | `CHANNEL_TIER_80` (shared by all sources) |
+| 90%+ | `CHANNEL_TIER_90` (shared by all sources) |
 
 So a base channel carries everything *below* 70% for that one source, and the
 tier channels stay combined across all sources. `/status` prints the live
 routing map.
 
 Badges in the headline: 95+ 💎✨ · 90+ 🔥 · 80+ 🚨.
+
+## Hyper-local sources (Blinkit, BigBasket)
+
+Unlike Myntra/Croma, these price per **delivery point**, not nationally: the
+same SKU at two dark stores is two different observations, so `location` is
+part of the seen-key. Each source has a list of points:
+
+* **Blinkit** — a coordinate. Write `lat | lon | name`, or `pin:132103 | Panipat`
+  and it is geocoded once and cached in `data/pincode_cache.json`.
+* **BigBasket** — a service-area triple, `ec_id | sa_id | city_id | name`.
+  There is no reliable public pincode → service-area lookup, so `pin:` lines
+  are **not** auto-resolved for BigBasket; the file header shows exactly how to
+  read the three ids from DevTools, and a hand-written `pincode_cache.json`
+  entry makes a `pin:` line work.
+
+Both files are seeded from `config/` on first boot and are live-editable with
+`/add_location` (no restart; the file is re-read and the point list reloaded).
+
+A WAF 403 is treated as a block, not a flake: after a few refusals in a row the
+run is **abandoned** rather than finishing the sweep, and the per-source circuit
+breaker parks the source. `/status` shows the `403=` count and an
+`aborted=` line, because feeding such a block only deepens it.
+
+Q-commerce discounts are shallow (mostly 10–35%), so a grocery base feed only
+makes sense with the empty-DB baseline below, or `SOURCE_BLINKIT_MIN_DISCOUNT_NEW=0`
+for a targeted single-store test.
+
+## Send pacing (the anti-flood gate)
+
+The bot posts through a three-bucket gate — global, per-bot, and **per-chat** —
+because Telegram's per-*chat* ceiling (~20 messages/minute) is the one that
+actually bites, whatever the overall throughput is. Defaults:
+
+| Setting | Default | Why |
+|---|---|---|
+| `SEND_GLOBAL_PER_SEC` | `20` | Telegram's overall tolerance |
+| `SEND_PER_BOT_PER_SEC` | `15` | headroom under one bot's share |
+| `SEND_PER_CHAT_PER_MIN` | `18` | just under Telegram's ~20/min per channel |
+| `SEND_MAX_QUEUE` | `5000` | memory ceiling; overflow is dropped and counted, not buffered forever |
+
+A burst therefore drains at Telegram's pace, never faster. If the gate says wait,
+the worker rotates to another message instead of sleeping — so one busy channel
+cannot stall the others. A `429 retry_after` penalises that chat for exactly the
+duration Telegram asked for.
+
+Nothing is lost across a restart: unsent messages are written to
+`data/outbox.jsonl` on shutdown and re-queued on the next boot. This matters
+because the pipeline marks a product seen *before* it is sent — without the
+outbox, a restart mid-drain would drop those deals permanently.
+
+## Empty-DB baseline
+
+With `BASELINE_ON_EMPTY=true` (default), a source whose seen-DB is empty records
+the current catalogue state and **posts nothing** on that first cycle. Only
+changes from the next cycle onwards are announced.
+
+That is what makes "clear the database and redeploy" safe: without it, an empty
+DB means every qualifying product is *new* at once, and the first cycle is a
+wall of messages. The baseline is per source, so adding a source never re-posts
+the others.
 
 ## Multiple bots
 
@@ -207,12 +297,23 @@ survive a genuine price drop into range.
 |---|---|---|---|
 | `BOT_TOKENS` | **yes** | — | comma/newline-separated bot tokens, token #1 = control bot |
 | `ADMIN_CHAT_ID` | **yes** | — | your Telegram user/chat id — only this id may control |
-| `CHANNEL_ALL` | **yes** | — | deal channel id (all deals) |
-| `CHANNEL_70PLUS` | no | same as ALL | 70–79% deals (shared by all sources) |
-| `CHANNEL_80PLUS` | no | same as ALL | 80–89% deals (shared by all sources) |
-| `CHANNEL_90PLUS` | no | same as ALL | 90%+ deals (shared by all sources) |
-| `CHANNEL_MYNTRA` | no | same as ALL | Myntra base feed (below 70%) |
-| `CHANNEL_CROMA` | no | same as ALL | Croma base feed (below 70%) |
+| `CHANNEL_BASE_DEFAULT` | no\* | — | fallback base feed — \*set this (or any base/tier), else startup fails |
+| `CHANNEL_BASE_MYNTRA` | no | `CHANNEL_BASE_DEFAULT` | Myntra base feed (below 70%) |
+| `CHANNEL_BASE_CROMA` | no | `CHANNEL_BASE_DEFAULT` | Croma base feed (below 70%) |
+| `CHANNEL_BASE_BLINKIT` | no | `CHANNEL_BASE_DEFAULT` | Blinkit base feed (below 70%) |
+| `CHANNEL_BASE_BIGBASKET` | no | `CHANNEL_BASE_DEFAULT` | BigBasket base feed (below 70%) |
+| `CHANNEL_TIER_70` | no | `CHANNEL_BASE_DEFAULT` | 70–79% deals (shared by all sources) |
+| `CHANNEL_TIER_80` | no | `CHANNEL_BASE_DEFAULT` | 80–89% deals (shared by all sources) |
+| `CHANNEL_TIER_90` | no | `CHANNEL_BASE_DEFAULT` | 90%+ deals (shared by all sources) |
+| `SEND_GLOBAL_PER_SEC` | no | `20` | overall send ceiling, all bots + chats |
+| `SEND_PER_BOT_PER_SEC` | no | `15` | per-bot send ceiling |
+| `SEND_PER_CHAT_PER_MIN` | no | `18` | per-channel ceiling (Telegram's is ~20) |
+| `SEND_MAX_QUEUE` | no | `5000` | queue must never grow without bound |
+| `BASELINE_ON_EMPTY` | no | `true` | a cleared DB records silently, never floods |
+| `SOURCE_BLINKIT_*` | no | spec default | `ENABLED=true`, `RPS=3`, `IMPERSONATE=chrome124`, `PAGE_LIMIT=15`, `MAX_PAGES=6`, `CONCURRENCY=5`, `COOLDOWN=20`, `WARM_COOKIES=true` |
+| `SOURCE_BIGBASKET_*` | no | spec default | `ENABLED=true`, `RPS=4`, `IMPERSONATE=chrome`, `MAX_PAGES=5`, `CONCURRENCY=8`, `COOLDOWN=25`, `COOKIE_TTL=600` |
+| `GEOCODE_ENABLED` | no | `true` | resolve Blinkit `pin:` lines via a public geocoder |
+| `GEOCODE_URL` | no | Nominatim | geocoder endpoint (results cached on the volume) |
 | `AUTO_CLEAR_ENABLED` | no | `true` | re-post eligible deals on a cooldown |
 | `AUTO_CLEAR_HOURS` | no | `24` | cooldown before an eligible deal may re-post |
 | `AUTO_CLEAR_MAX_PER_HOUR` | no | `25` | hard cap on auto-clear re-posts per hour |
@@ -220,27 +321,24 @@ survive a genuine price drop into range.
 | `AUTO_CLEAR_MIN_DISCOUNT` | no | `50` | min discount to be an auto-clear candidate |
 | `SEEN_RETENTION_DAYS` | no | `45` | prune seen rows not notified within this |
 | `PRUNE_INTERVAL_HOURS` | no | `24` | how often the prune sweep runs |
-| `SOURCE_<NAME>_RPS` | no | `5` | per-source request budget (polite pacing) |
+| `SOURCE_<NAME>_RPS` | no | spec default | per-source request budget (polite pacing) |
 | `SOURCE_<NAME>_INTERVAL` | no | `0` | seconds between runs; `0` = every tick |
+| `SOURCE_<NAME>_ENABLED` | no | `true` | switch one source off without touching the rest |
+| `SOURCE_<NAME>_IMPERSONATE` | no | spec default | curl_cffi TLS profile for that source |
 | `SOURCE_<NAME>_MAX_PAGES` / `_CONCURRENCY` / `_MIN_DISCOUNT_*` | no | spec default | per-source overrides |
+| `SOURCE_MYNTRA_*` | no | spec default | `RPS=5`, `IMPERSONATE=chrome131_android`, `MAX_PAGES=5`, `CONCURRENCY=20` |
+| `SOURCE_CROMA_*` | no | spec default | `ENABLED=true`, `RPS=5`, `IMPERSONATE=chrome120`, `CHANNEL_CODE=400049`, `MAX_PAGES=10`, `CONCURRENCY=6` |
 | `DATA_DIR` | no | `./data` | `/data` on Railway volume |
-| `PINCODE` | no | `387001` | delivery pincode |
+| `PINCODE` | no | `387001` | delivery pincode (Myntra) |
 | `CYCLE_DELAY` | no | `20` | seconds between cycles |
 | `SCRAPE_CONCURRENCY` | no | `20` | parallel requests |
-| `MAX_WORKERS` | no | `10` | legacy compat |
 | `MAX_PAGES_PER_URL` | no | `5` | pages per URL |
 | `MIN_DISCOUNT_NEW` | no | `0` | min % for unseen products |
 | `MIN_DISCOUNT_EXISTING` | no | `15` | min % for seen products |
 | `MIN_CHANGE_PERCENT` | no | `1` | re-alert only if discount rose by this |
-| `CURL_IMPERSONATE` | no | `chrome131_android` | curl_cffi profile — must be Android-family to match the Android UA |
 | `MAX_CYCLES` | no | `0` | `0` = forever, `1` = single test cycle |
 | `PORT` | no | — | Railway injects; health server answers `OK` |
 | `LOG_LEVEL` | no | `INFO` | `DEBUG` shows per-request 403/429 detail |
-| `CROMA_ENABLED` | no | `true` | run the Croma scraper alongside Myntra |
-| `CROMA_IMPERSONATE` | no | `chrome120` | curl_cffi profile for Chroma (desktop Chrome) |
-| `CROMA_CHANNEL_CODE` | no | `400049` | Chroma store/channel code in the category API |
-| `CROMA_MAX_PAGES` | no | `10` | pages per Chroma category URL |
-| `CROMA_CONCURRENCY` | no | `6` | parallel Chroma category requests |
 
 Get your Telegram id: message `@userinfobot`, copy the number.
 
@@ -264,10 +362,15 @@ reasoning; the short version:
   hundreds of products simultaneously the moment the process restarts.
 * **Retention** — the seen DB is pruned so a permanent deployment does not grow
   without bound on a finite volume.
+* **Sends are paced, not batched** — the three-bucket send gate caps global,
+  per-bot and per-channel throughput, so a large batch (or a cleared database)
+  cannot arrive as a flood. Unsent messages survive a restart via the outbox.
+* **A cleared DB posts nothing on the first cycle** — the per-source baseline
+  records state silently, so wiping the database is a safe operation.
 * **Everything is env-tunable** — a site that starts 429-ing can be slowed down
   without a redeploy.
 
-Adding a source (Blinkit, Zepto, Instamart) is a new adapter plus env vars; see
+Adding another source is a new adapter plus env vars; see
 [`docs/FUTURE-SOURCES.md`](docs/FUTURE-SOURCES.md).
 
 ## Tests
@@ -276,7 +379,12 @@ Adding a source (Blinkit, Zepto, Instamart) is a new adapter plus env vars; see
 python scripts/smoke_test.py        # tiers, seen store, blacklist, parsing
 python scripts/integration_test.py  # fake source through the real pipeline
 python scripts/button_test.py      # simulated Telegram button round trip
+python scripts/poller_test.py      # per-bot Telegram cursor isolation
+python scripts/migration_check.py  # seen-DB schema migration from v1
+python scripts/qcommerce_test.py   # Blinkit/BigBasket parsers, routing, send gate
 ```
+
+All six run offline — no network, no Telegram.
 
 ## 403 fix (Oct 2026 — verified live: search HTTP 200, 287k products)
 
@@ -310,8 +418,8 @@ rotate egress IP or lower `SCRAPE_CONCURRENCY`.
 ## Run locally
 
 ```powershell
-cd C:\Users\bhati\Downloads\dns-utilities\myntra-scraper
-copy .env.example .env   # fill BOT_TOKENS, ADMIN_CHAT_ID, CHANNEL_ALL
+cd C:\Users\bhati\OneDrive\Desktop\DnS\dns-utilities\dns-scraper
+copy .env.example .env   # fill BOT_TOKENS, ADMIN_CHAT_ID, and the CHANNEL_BASE_* / CHANNEL_TIER_* ids
 pip install -r requirements.txt
 python main.py
 # single test cycle:
@@ -320,23 +428,27 @@ $env:MAX_CYCLES=1; python main.py
 
 ## Deploy on Railway — steps
 
-1. **Push to GitHub** (fresh repo, e.g. `dns-utilities/myntra-scraper`):
+1. **Push to GitHub** (fresh repo, e.g. `dns-utilities/dns-scraper`):
    ```powershell
-   cd C:\Users\bhati\Downloads\dns-utilities\myntra-scraper
-   git init; git add -A; git commit -m "myntra-scraper: clean rebuild with control bot"
-   git remote add origin https://github.com/YOUR-ORG/myntra-scraper.git
+   cd C:\Users\bhati\OneDrive\Desktop\DnS\dns-utilities\dns-scraper
+   git init; git add -A; git commit -m "dns-scraper: clean rebuild with control bot"
+   git remote add origin https://github.com/YOUR-ORG/dns-scraper.git
    git branch -M main; git push -u origin main
    ```
    `.env`, `data/`, `*.db*` are gitignored — secrets never committed.
 2. **Railway → New Project → Deploy from GitHub** → pick the repo.
 3. **Settings → Deploy**: Start `python main.py`, Restart `ON_FAILURE` ×10, Healthcheck OFF (worker; built-in server answers `$PORT` anyway).
 4. **Volumes → New Volume**, mount `/data`. **Variables** → `DATA_DIR=/data`.
-5. **Variables** — set `BOT_TOKENS`, `ADMIN_CHAT_ID`, `CHANNEL_ALL`
-   (+ optionals above). Get tokens from your old `bot_tokens_for_railway.txt`.
+5. **Variables** — set `BOT_TOKENS`, `ADMIN_CHAT_ID`, and the
+   `CHANNEL_BASE_*` / `CHANNEL_TIER_*` ids (per-source bases plus the shared
+   70/80/90 tiers). Get tokens from your old `bot_tokens_for_railway.txt`.
 6. **Redeploy** → logs should show `control bot polling as @...`, `Loaded N urls`,
    `CYCLE #1`. Send `/status` to the control bot → it replies.
-7. Seed links: repo `config/links.txt` auto-copies to `/data/links.txt` on first
-   boot; afterwards manage with `/add_link` live (persists on volume).
+7. **Clearing the database**: delete `*.db` (and, if you want a hard reset,
+   `outbox.jsonl`) from the volume and redeploy. The per-source baseline records
+   the first cycle silently, so the cleared DB does not flood the channels.
+8. Seed links: repo `config/*.txt` auto-copy to `/data/` on first boot; afterwards
+   manage with `/add_link` and `/add_location` live (they persist on the volume).
 
 ## Cost note
 

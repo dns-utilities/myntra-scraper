@@ -14,10 +14,10 @@ import random
 
 from curl_cffi.requests import AsyncSession
 
-from myntra_scraper.croma_api import ROWS_PER_PAGE, api_headers, build_api_url, parse_category_url
-from myntra_scraper.models import Product
+from dns_scraper.croma_api import ROWS_PER_PAGE, api_headers, build_api_url, parse_category_url
+from dns_scraper.models import Product
 
-log = logging.getLogger("myntra_scraper.croma")
+log = logging.getLogger("dns_scraper.croma")
 
 
 class CromaScraper:

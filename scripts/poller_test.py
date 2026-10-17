@@ -23,6 +23,8 @@ except Exception:
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
+from dns_scraper.channels import ChannelPlan
+
 FAILS: list[str] = []
 
 
@@ -34,12 +36,13 @@ def check(label, got, want):
 
 
 class FakeApp:
-    settings = type("S", (), {"channels": {"all": -100, "70plus": -101},
-                              "bot_tokens": [], "admin_chat_id": 42})()
+    settings = type("S", (), {
+        "channel_plan": ChannelPlan(bases={"default": -100}, tiers={70: -101}),
+        "bot_tokens": [], "admin_chat_id": 42})()
 
 
 def main() -> int:
-    from myntra_scraper.controller_bot import ControllerBot
+    from dns_scraper.controller_bot import ControllerBot
 
     TOKENS = ["111:aaa", "222:bbb", "333:ccc"]
     bot = ControllerBot(TOKENS[0], 42, FakeApp(), bot_tokens=TOKENS)  # type: ignore[arg-type]

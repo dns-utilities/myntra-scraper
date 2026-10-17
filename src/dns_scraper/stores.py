@@ -23,7 +23,7 @@ import zlib
 from datetime import datetime, timedelta
 from pathlib import Path
 
-log = logging.getLogger("myntra_scraper.stores")
+log = logging.getLogger("dns_scraper.stores")
 
 
 class LinkStore:
@@ -425,13 +425,15 @@ class SeenStore:
     def stats(self) -> dict:
         with self._lock:
             total = self._conn.execute("SELECT COUNT(*) FROM seen").fetchone()[0]
-            hot = self._conn.execute(
+            # "tiered" = reached the lowest shared tier, so it is not a
+            # base-feed-only product.
+            tiered = self._conn.execute(
                 "SELECT COUNT(*) FROM seen WHERE last_discount >= 70").fetchone()[0]
             notifs = self._conn.execute(
                 "SELECT COALESCE(SUM(notification_count),0) FROM seen").fetchone()[0]
             recycled = self._conn.execute(
                 "SELECT COUNT(*) FROM seen WHERE auto_clear=1").fetchone()[0]
-        return {"tracked": total, "hot_70plus": hot, "notifications": notifs,
+        return {"tracked": total, "tiered": tiered, "notifications": notifs,
                 "auto_clear_eligible": recycled}
 
     def close(self) -> None:

@@ -20,8 +20,8 @@ except Exception:
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from myntra_scraper.deal_buttons import DealButtonHandler, parse_deal_message
-from myntra_scraper.stores import BlacklistStore
+from dns_scraper.deal_buttons import DealButtonHandler, parse_deal_message
+from dns_scraper.stores import BlacklistStore
 
 FAILS: list[str] = []
 ADMIN = 42

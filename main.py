@@ -28,9 +28,9 @@ if sys.platform == "win32":
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from myntra_scraper.app import ScraperApp
-from myntra_scraper.config import Settings
-from myntra_scraper.logging_setup import setup_logging
+from dns_scraper.app import ScraperApp
+from dns_scraper.config import Settings
+from dns_scraper.logging_setup import setup_logging
 
 
 def load_dotenv() -> None:
@@ -54,7 +54,7 @@ def start_health_server(port: int) -> None:
             self.send_response(200)
             self.send_header("Content-Type", "text/plain")
             self.end_headers()
-            self.wfile.write(b"OK - myntra-scraper alive")
+            self.wfile.write(b"OK - dns-scraper alive")
 
         def log_message(self, *args: object) -> None:
             pass
@@ -70,18 +70,18 @@ def start_health_server(port: int) -> None:
 async def amain() -> None:
     load_dotenv()
     bootstrap = Settings(
-        bot_tokens=["x:y"], control_bot_token="x:y", admin_chat_id=1, channel_all=1,
+        bot_tokens=["x:y"], control_bot_token="x:y", admin_chat_id=1,
         data_dir=Path(os.environ.get("DATA_DIR", "./data")),
         log_level=os.environ.get("LOG_LEVEL", "INFO"))
-    logger = setup_logging("myntra_scraper", bootstrap.log_file, bootstrap.log_level)
+    logger = setup_logging("dns_scraper", bootstrap.log_file, bootstrap.log_level)
     try:
         settings = Settings.load()
     except ValueError as exc:
         logger.error("%s", exc)
         sys.exit(1)
-    logger = setup_logging("myntra_scraper", settings.log_file, settings.log_level)
+    logger = setup_logging("dns_scraper", settings.log_file, settings.log_level)
     start_health_server(settings.port)
-    logger.info("myntra-scraper v2 starting | %d bots | admin=%d",
+    logger.info("dns-scraper v2 starting | %d bots | admin=%d",
                 len(settings.bot_tokens), settings.admin_chat_id)
     app = ScraperApp(settings)
     loop = asyncio.get_running_loop()

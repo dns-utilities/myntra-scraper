@@ -19,7 +19,7 @@ except Exception:
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from myntra_scraper.stores import SeenStore
+from dns_scraper.stores import SeenStore
 
 FAILS = []
 

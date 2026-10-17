@@ -24,7 +24,7 @@ import threading
 import time
 from typing import Callable
 
-log = logging.getLogger("myntra_scraper.deal_buttons")
+log = logging.getLogger("dns_scraper.deal_buttons")
 
 CALLBACK_PREFIX = "blk"
 # Telegram id used when a channel admin acts as the channel itself.
@@ -63,7 +63,9 @@ _URL_RE = re.compile(r"https?://\S+")
 _APP_RE = re.compile(r"^App:\s*(.+)$", re.M)
 _PID_RES = (re.compile(r"[?&]pid=([A-Za-z0-9]{4,25})", re.I),
             re.compile(r"myntra\.com/(?:buy/)?([A-Za-z0-9]{5,25})", re.I),
-            re.compile(r"croma\.com/\S*?/(\d{5,12})", re.I))
+            re.compile(r"croma\.com/\S*?/(\d{5,12})", re.I),
+            re.compile(r"blinkit\.com/\S*?/prid/(\d{4,20})", re.I),
+            re.compile(r"bigbasket\.com/pd/(\d{4,20})", re.I))
 
 
 def _int(raw: str) -> int:

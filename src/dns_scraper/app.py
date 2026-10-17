@@ -14,21 +14,27 @@ import logging
 import time
 from datetime import datetime
 
-from myntra_scraper.brand_registry import BrandRegistry
-from myntra_scraper.config import Settings
-from myntra_scraper.deal_buttons import DealButtonHandler
-from myntra_scraper.croma_stores import CromaStoreMapper
-from myntra_scraper.models import Product
-from myntra_scraper.notifier import DealNotifier
-from myntra_scraper.sources import SourceAdapter, build_sources
-from myntra_scraper.stores import AutoClearPolicy, BlacklistStore
-from myntra_scraper.token_manager import TokenManager
+from dns_scraper.brand_registry import BrandRegistry
+from dns_scraper.channels import TIER_FLOORS
+from dns_scraper.config import Settings
+from dns_scraper.deal_buttons import DealButtonHandler
+from dns_scraper.croma_stores import CromaStoreMapper
+from dns_scraper.models import Product
+from dns_scraper.notifier import DealNotifier, SendLimits
+from dns_scraper.sources import SourceAdapter, build_sources
+from dns_scraper.stores import AutoClearPolicy, BlacklistStore
+from dns_scraper.token_manager import TokenManager
 
-log = logging.getLogger("myntra_scraper.app")
+log = logging.getLogger("dns_scraper.app")
 
 # Minimum gap between two admin alerts about the same source, so a dead site
 # does not turn into a notification flood.
 ALERT_COOLDOWN_SECONDS = 1800
+
+# How long shutdown waits for the send queue to empty before handing the rest
+# to the on-disk outbox. Long enough that a normal queue finishes, short enough
+# that a platform-wide redeploy still exits promptly.
+DRAIN_SECONDS = 20.0
 
 
 class ScraperApp:
@@ -37,11 +43,32 @@ class ScraperApp:
         settings.ensure_data_dir()
 
         self.blacklist = BlacklistStore(settings.blacklist_db)
-        self.notifier = DealNotifier(settings.bot_tokens, settings.channels,
-                                     settings.affiliate_tag)
+        self.notifier = DealNotifier(
+            settings.bot_tokens, settings.channel_plan, settings.affiliate_tag,
+            limits=SendLimits(global_per_sec=settings.send_global_per_sec,
+                              per_bot_per_sec=settings.send_per_bot_per_sec,
+                              per_chat_per_min=settings.send_per_chat_per_min,
+                              max_queue=settings.send_max_queue))
+        # Anything a previous run persisted mid-shutdown is owed to the
+        # channels, so it goes back in front of the workers immediately.
+        restored = self.notifier.restore(settings.outbox_file)
+        if restored:
+            log.warning("Resumed %d unsent message(s) from the previous run", restored)
         self.croma_stores = CromaStoreMapper(settings.croma_stores_file)
         self.sources: list[SourceAdapter] = build_sources(settings)
         self._by_name = {s.name: s for s in self.sources}
+        # A source with no base channel would silently drop every sub-tier deal,
+        # one error line at a time. Much better to say so once, at boot.
+        plan = settings.channel_plan
+        homeless = [s.label for s in self.sources if not plan.base_for(s.name)]
+        if homeless:
+            log.warning("No base channel for %s — deals below %d%% will be dropped. "
+                        "Set CHANNEL_BASE_DEFAULT, or CHANNEL_BASE_<NAME> per source.",
+                        ", ".join(homeless), min(TIER_FLOORS))
+        # Sources whose empty-DB baseline has already been laid down, so the
+        # "first run records, does not post" rule fires exactly once per source.
+        self._baselined: set[str] = set()
+        self._shutdown_done = False
 
         # Auto-clear: which deep discounts are worth re-posting on a cooldown.
         self.brand_registry = BrandRegistry.load(settings.auto_clear_brands_file)
@@ -75,7 +102,7 @@ class ScraperApp:
 
     # -- controller wiring -------------------------------------------------
     def _set_controller(self) -> None:
-        from myntra_scraper.controller_bot import ControllerBot
+        from dns_scraper.controller_bot import ControllerBot
 
         self.controller = ControllerBot(
             self.settings.control_bot_token, self.settings.admin_chat_id, self,
@@ -84,7 +111,7 @@ class ScraperApp:
             self.blacklist,
             {s.name: s.seen() for s in self.sources},
             self.settings.admin_chat_id,
-            set(self.settings.channels.values()),
+            set(self.settings.channel_plan.destinations()),
             send=self.controller.reply,
             answer=self.controller.answer_callback)
 
@@ -127,6 +154,12 @@ class ScraperApp:
     @property
     def croma_seen(self):
         return self._croma.seen() if self._croma else None
+
+    def source(self, name: str) -> SourceAdapter | None:
+        return self._by_name.get(name)
+
+    def source_names(self) -> list[str]:
+        return [s.name for s in self.sources]
 
     # -- spam words --------------------------------------------------------
     def _load_spam_words(self) -> set[str]:
@@ -188,10 +221,34 @@ class ScraperApp:
             product.brand, product.title, product.discount,
             self.auto_clear_policy.min_discount)
 
+    def _baseline_pending(self, source: SourceAdapter, seen_store) -> bool:
+        """True on a source's very first run over an empty seen-DB.
+
+        Clearing the database is a normal operation (redeploy, migration), but
+        on a discount feed "empty database" means every qualifying product is
+        new at once. So the first cycle records the current state and posts
+        nothing; only changes from the next cycle onwards are announced. This
+        is what stops a wipe from becoming a wall of messages.
+        """
+        if not self.settings.baseline_on_empty:
+            return False
+        if source.name in self._baselined:
+            return False
+        try:
+            empty = seen_store.stats().get("tracked", 0) == 0
+        except Exception as exc:
+            log.debug("Baseline check failed for %s: %s", source.name, exc)
+            return False
+        if not empty:
+            self._baselined.add(source.name)
+            return False
+        return True
+
     def _process_products(self, products, source: SourceAdapter) -> tuple[int, int]:
         """Filter + queue one source's batch. Returns (queued, skipped)."""
         seen_store = source.seen()
-        queued, skipped, seen_keys = 0, 0, set()
+        baseline = self._baseline_pending(source, seen_store)
+        queued, skipped, seen_keys, recorded = 0, 0, set(), 0
         for product in products:
             key = (product.product_id, product.price, product.discount)
             if key in seen_keys:
@@ -204,6 +261,15 @@ class ScraperApp:
                 continue
             location = source.location_for(product)
             eligible = self._auto_clear_eligible(product)
+            if baseline:
+                # Record silently: this is the baseline, not a deal.
+                seen_store.save(product.product_id, product.price, product.discount,
+                                location=location,
+                                store_codes=getattr(product, "store_codes", ()) or None,
+                                product_name=product.title, brand=product.brand,
+                                auto_clear=eligible)
+                recorded += 1
+                continue
             ok, why = seen_store.should_notify(
                 product.product_id, product.price, product.mrp, product.discount,
                 location=location,
@@ -217,10 +283,15 @@ class ScraperApp:
                             store_codes=getattr(product, "store_codes", ()) or None,
                             product_name=product.title, brand=product.brand,
                             auto_clear=eligible)
-            self.notifier.queue(product)
-            queued += 1
+            if self.notifier.queue(product):
+                queued += 1
             log.info("QUEUED [%s] %d%% Rs.%d %s (%s)", source.name, product.discount,
                      product.price, product.brand, why)
+        if baseline and recorded:
+            self._baselined.add(source.name)
+            log.warning("[%s] BASELINE run: recorded %d product(s) silently, posted "
+                        "nothing. Real deals start from the next cycle.",
+                        source.name, recorded)
         return queued, skipped
 
     # -- scheduling --------------------------------------------------------
@@ -352,51 +423,65 @@ class ScraperApp:
             interval = source.spec.interval or self.settings.cycle_delay
             state = "PARKED %.0fs" % st.get("cooldown", 0) if st.get("open") else "ok"
             lines.append(
-                "%s: links=%d tracked=%d hot70+=%d every=%ds (%s)"
+                "%s: links=%d tracked=%d tiered=%d every=%ds (%s)"
                 % (source.spec.label, len(source.links()), seen["tracked"],
-                   seen["hot_70plus"], interval, state))
+                   seen["tiered"], interval, state))
             lines.append(
-                "  api req=%d ok=%d err=%d (403=%d 429=%d) | runs=%d items=%d empty=%d"
+                "  api req=%d ok=%d err=%d (403=%d 429=%d aborted=%d) | "
+                "runs=%d items=%d empty=%d"
                 % (st.get("requests", 0), st.get("success", 0), st.get("errors", 0),
                    st.get("forbidden", 0), st.get("rate_limited", 0),
+                   st.get("aborted_runs", 0),
                    st.get("runs", 0), st.get("items", 0), st.get("empty_runs", 0)))
+            if st.get("aborted_runs"):
+                lines.append("    ⚠ %d run(s) aborted on repeated 403 — this egress IP "
+                             "looks blocked by that site's WAF."
+                             % st["aborted_runs"])
             if st.get("last_error"):
                 lines.append("  last error: %s" % st["last_error"])
         lines += [
-            "queue: sent=%d failed=%d pending=%d blocked-pairings=%d" % (
-                tg["sent"], tg["failed"], tg["pending"],
+            "queue: sent=%d failed=%d dropped=%d pending=%d blocked-pairings=%d" % (
+                tg["sent"], tg["failed"], tg.get("dropped", 0), tg["pending"],
                 tg.get("blocked_pairings", 0)),
+            "send pacing: %s" % self.notifier.limits.describe(),
+            "baseline: %s | laid down for: %s" % (
+                "ON" if self.settings.baseline_on_empty else "OFF",
+                ", ".join(sorted(self._baselined)) or "none yet"),
             budget_line,
             "blacklist: %d brand rules | %d product blocks" % (
                 len(self.blacklist.all()), len(self.blacklist.product_blocks())),
             "affiliate: %s" % ("OFF (clean links)" if not self.affiliate_tag
                                else "ON (%s…)" % self.affiliate_tag[:40]),
         ]
+        if tg["pending"]:
+            top = sorted((tg.get("pending_by_chat") or {}).items(),
+                         key=lambda kv: -kv[1])[:4]
+            lines.append("  pending by chat: %s"
+                         % ", ".join("%s:%d" % (cid, n) for cid, n in top))
         return "\n".join(lines)
 
     def routing_text(self) -> str:
         """One line describing where each discount band posts."""
-        ch = self.settings.channels
-        base_all = ch.get("all")
-
-        def label(name: str) -> str:
-            cid = ch.get(name)
-            if not cid:
-                return "-"
-            return "%s(%s)" % (name, "=ALL" if cid == base_all else cid)
-
-        per_source = bool(ch.get("myntra") or ch.get("croma"))
-        base = "myntra/croma base" if per_source else "ALL"
-        return ("routes: <70%%->%s | %s | %s | %s  [base per-source, tiers exclusive]"
-                % (base, label("70plus"), label("80plus"), label("90plus")))
+        return self.settings.channel_plan.describe()
 
     async def shutdown(self) -> None:
-        log.info("Shutting down - draining queue...")
-        for _ in range(100):
-            if self.notifier.pending == 0:
-                break
-            await asyncio.sleep(0.1)
+        # main.py and run_forever() both call this on the way out; without the
+        # guard the queue is drained and the outbox written twice.
+        if self._shutdown_done:
+            return
+        self._shutdown_done = True
+        log.info("Shutting down - draining send queue (up to %.0fs)...", DRAIN_SECONDS)
+        deadline = time.monotonic() + DRAIN_SECONDS
+        while self.notifier.pending and time.monotonic() < deadline:
+            await asyncio.sleep(0.25)
         self.notifier.stop()
+        # Whatever did not make it out is written to the outbox and re-queued
+        # on the next boot. Without this the deals were already marked "seen",
+        # so a restart would drop them permanently.
+        left = self.notifier.persist(self.settings.outbox_file)
+        if left:
+            log.warning("Shutdown with %d unsent message(s) — parked in %s for "
+                        "the next run", left, self.settings.outbox_file)
         if self.controller:
             self.controller.stop()
         for source in self.sources:
